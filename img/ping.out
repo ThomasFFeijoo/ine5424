@@ -1,0 +1,22 @@
+
+Setting up this machine as follows: 
+  Processor:    1 x IA32 at 3218 MHz (BUS clock = 125 MHz)
+  Memory:       262144 Kbytes [0x00000000:0x10000000]
+  User memory:  261820 Kbytes [0x00000000:0x0ffaf000]
+  PCI aperture: 28612 Kbytes [0xfd000000:0xfebf1000]
+  Node Id:      will get from the network!
+  Position:       (0,0,0)
+  Setup:        22272 bytes
+  APP code:     82000 bytes	data: 704 bytes
+STAT/ACK = CNA 
+CU = CUS_SUSPENDED
+RU = RUS_READY
+IP Test Program
+Sizes:
+  NIC::Header => 14
+  IP::Header => 20
+  UDP::Header => 8
+ICMP Test
+  IP: a.0.1.8
+  MAC: 56:34:12:0:54:8
+Receiver:
