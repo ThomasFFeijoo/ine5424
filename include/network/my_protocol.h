@@ -62,7 +62,9 @@ public:
             return _networks[unit];
     }
     //static Buffer * alloc(const Address & to, const Ethernet::Protocol & prot, unsigned int once, unsigned int payload);
+    
     static int send(const void * data, unsigned int size);
+    // utilizar o checksum como receive
     static int receive(void * data, unsigned int size);
     static const unsigned int mtu() { return MTU; }
 
