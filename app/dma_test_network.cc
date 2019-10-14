@@ -1,5 +1,3 @@
-// EPOS NIC Test Programs
-
 #include <machine/nic.h>
 #include <time.h>
 

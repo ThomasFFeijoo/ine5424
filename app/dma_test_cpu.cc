@@ -1,11 +1,9 @@
-// EPOS NIC Test Programs
-
 #include <utility/ostream.h>
 
 using namespace EPOS;
 
 OStream cout;
-
+//https://stackoverflow.com/questions/1518726/recursive-fibonacci
 //demora cerca de 12 segundos
 int fib(unsigned int n) {
     if (n <= 1) {
