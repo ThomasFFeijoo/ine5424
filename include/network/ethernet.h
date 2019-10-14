@@ -119,6 +119,8 @@ public:
         unsigned int frame_errors;
         unsigned int carrier_errors;
         unsigned int collisions;
+        bool rx_overflow = false;
+        bool tx_overflow = false;
     };
 
 protected:

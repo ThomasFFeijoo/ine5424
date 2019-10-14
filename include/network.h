@@ -16,4 +16,8 @@
 #include <network/tstp/tstp.h>
 #endif
 
+#ifdef __mp__
+#include <network/my_protocol.h>
+#endif
+
 #endif
