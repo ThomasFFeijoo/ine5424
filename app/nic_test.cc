@@ -12,34 +12,26 @@ int main()
 {
     cout << "NIC Test" << endl;
     Simple_Protocol * sp = new Simple_Protocol();
-    NIC<Ethernet> * nic = Traits<Ethernet>::DEVICES::Get<0>::Result::get(0);
 
-    NIC<Ethernet>::Address src, dst;
-    NIC<Ethernet>::Protocol prot;
-    char data[nic->mtu()];
+    Simple_Protocol::Address self = sp->address();
 
-    NIC<Ethernet>::Address self = nic->address();
     cout << "  MAC: " << self << endl;
 
+    char data[5];
+    
     if(self[5] % 2) { // sender
         Delay (5000000);
 
         for(int i = 0; i < 10; i++) {
-            memset(data, '0' + i, nic->mtu());
-            data[nic->mtu() - 1] = '\n';
-            nic->send(nic->broadcast(), 0x8888, data, nic->mtu());
+            memset(data, '0' + i, 5);
+            data[4] = '\n';
+            cout << " Sending: " << data;
+            sp->send(Simple_Protocol::Address::BROADCAST, data, 5);
         }
     } else { // receiver
         for(int i = 0; i < 10; i++) {
-           nic->receive(&src, &prot, data, nic->mtu());
+           sp->receive(data, 5);
            cout << "  Data: " << data;
         }
     }
-
-    NIC<Ethernet>::Statistics stat = nic->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << "\n";
 }
