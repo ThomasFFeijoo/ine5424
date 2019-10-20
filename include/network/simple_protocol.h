@@ -6,8 +6,6 @@
 #include <system/config.h>
 #include <machine/nic.h>
 
-#ifdef __sp__
-
 // TODO: what is this?
 __BEGIN_SYS
 
@@ -51,5 +49,4 @@ protected:
 
 __END_SYS
 
-#endif
 #endif

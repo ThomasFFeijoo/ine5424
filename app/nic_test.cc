@@ -2,6 +2,7 @@
 
 #include <machine/nic.h>
 #include <time.h>
+#include <network/simple_protocol.h>
 
 using namespace EPOS;
 
@@ -10,7 +11,7 @@ OStream cout;
 int main()
 {
     cout << "NIC Test" << endl;
-
+    Simple_Protocol * sp = new Simple_Protocol();
     NIC<Ethernet> * nic = Traits<Ethernet>::DEVICES::Get<0>::Result::get(0);
 
     NIC<Ethernet>::Address src, dst;
