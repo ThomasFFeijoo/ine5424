@@ -16,8 +16,4 @@
 #include <network/tstp/tstp.h>
 #endif
 
-#ifdef __sp__
-#include <network/simple_protocol.h>
-#endif
-
 #endif
