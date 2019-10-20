@@ -5,6 +5,7 @@
 
 #include <system/config.h>
 #include <machine/nic.h>
+#include <synchronizer.h>
 
 // TODO: what is this?
 __BEGIN_SYS
@@ -14,8 +15,11 @@ class Simple_Protocol:
     private Concurrent_Observer<Ethernet::Buffer, Ethernet::Protocol> {
 
 public:
-
+    typedef Ethernet::Protocol Protocol;
     typedef Ethernet::Buffer Buffer;
+    typedef Ethernet::Address Address;
+    typedef Data_Observer<Buffer, Protocol> Observer;
+    typedef Data_Observed<Buffer, Protocol> Observed;
 
 public:
 
@@ -34,11 +38,11 @@ public:
     }
 
     int receive(void * data, unsigned int size) {
-
+        return size;
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
-
+        Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
     }
 
 protected:
