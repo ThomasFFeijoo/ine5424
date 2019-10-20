@@ -7,7 +7,6 @@
 #include <machine/nic.h>
 #include <synchronizer.h>
 
-// TODO: what is this?
 __BEGIN_SYS
 
 class Simple_Protocol:
@@ -34,10 +33,13 @@ public:
     }
 
     int send(const Address & dst, const void * data, unsigned int size) {
-         return _nic->send(dst, Ethernet::PROTO_SP, data, size);
+        return _nic->send(dst, Ethernet::PROTO_SP, data, size);
     }
 
     int receive(void * data, unsigned int size) {
+        Buffer * buff = updated();
+        memcpy(data, buff->frame()->data<char>(), size);
+        _nic->free(buff);
         return size;
     }
 
