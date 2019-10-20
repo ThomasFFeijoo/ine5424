@@ -4,7 +4,6 @@
 #define __simple_protocol_h
 
 #include <system/config.h>
-#include <utility/bitmap.h>
 #include <machine/nic.h>
 
 #ifdef __sp__
@@ -28,13 +27,21 @@ public:
         _nic->attach(this, Ethernet::PROTO_SP);
     }
 
-    const Address & address();
+    const Address & address() {
+        return _nic->address();
+    }
 
-    static int send(const void * data, unsigned int size);
+    int send(const Address & dst, const void * data, unsigned int size) {
+         return _nic->send(dst, Ethernet::PROTO_SP, data, size);
+    }
 
-    static int receive(void * data, unsigned int size);
+    int receive(void * data, unsigned int size) {
 
-    void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf);
+    }
+
+    void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
+
+    }
 
 protected:
 
