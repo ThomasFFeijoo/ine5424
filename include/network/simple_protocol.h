@@ -22,6 +22,47 @@ public:
 
 public:
 
+    class Header
+    {
+        public:
+            Header() {}
+            //Header(from, to, ack):  {}
+            
+            
+
+        protected:
+            unsigned char  _from;
+            unsigned char  _to;
+            bool _ack;
+    }
+    
+    class Packet
+    {
+        public:
+            Packet(){}
+            //Packet(Data data):  {}
+            
+            template<typename T>
+            T * data() { return reinterpret_cast<T *>(&_data); }
+
+        private:
+            Data _data;
+    }
+
+    class Address
+    {
+        public:
+            Address() {}
+            //Address(mac, port):  {}
+
+            Local local() const { return 0; }
+        
+        private:
+            Port _port;
+            //mac
+    
+    };
+
     Simple_Protocol(unsigned int nic = 0) :
             _nic(Traits<Ethernet>::DEVICES::Get<0>::Result::get(nic))
     {
