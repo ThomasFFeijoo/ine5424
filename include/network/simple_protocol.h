@@ -22,46 +22,47 @@ public:
 
 public:
 
-    class Header
-    {
-        public:
-            Header() {}
-            Header(Port from, Port to, bool ack): _from(from), _to(to), _ack(ack) {}
-            
-            
+    // TODO: comment to compile test
+    // class Header
+    // {
+    //     public:
+    //         Header() {}
+    //         Header(Port from, Port to, bool ack): _from(from), _to(to), _ack(ack) {}
 
-        protected:
-            Port _from;
-            Port _to;
-            bool _ack;
-    }
-    
-    class Packet
-    {
-        public:
-            Packet(){}
-            //Packet(Data data):  {}
-            
-            template<typename T>
-            T * data() { return reinterpret_cast<T *>(&_data); }
 
-        private:
-            Data _data;
-    }
 
-    class Address
-    {
-        public:
-            Address() {}
-            //Address(mac, port):  {}
+    //     protected:
+    //         Port _from;
+    //         Port _to;
+    //         bool _ack;
+    // }
 
-            Local local() const { return 0; }
-        
-        private:
-            Port _port;
-            //mac
-    
-    };
+    // class Packet
+    // {
+    //     public:
+    //         Packet(){}
+    //         //Packet(Data data):  {}
+
+    //         template<typename T>
+    //         T * data() { return reinterpret_cast<T *>(&_data); }
+
+    //     private:
+    //         Data _data;
+    // }
+
+    // class Address
+    // {
+    //     public:
+    //         Address() {}
+    //         //Address(mac, port):  {}
+
+    //         Local local() const { return 0; }
+
+    //     private:
+    //         Port _port;
+    //         //mac
+
+    // };
 
     Simple_Protocol(unsigned int nic = 0) :
             _nic(Traits<Ethernet>::DEVICES::Get<0>::Result::get(nic))
