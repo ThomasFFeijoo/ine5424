@@ -26,13 +26,13 @@ public:
     {
         public:
             Header() {}
-            //Header(from, to, ack):  {}
+            Header(Port from, Port to, bool ack): _from(from), _to(to), _ack(ack) {}
             
             
 
         protected:
-            unsigned char  _from;
-            unsigned char  _to;
+            Port _from;
+            Port _to;
             bool _ack;
     }
     
