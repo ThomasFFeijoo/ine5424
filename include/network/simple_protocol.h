@@ -46,7 +46,7 @@ public:
         if (port == package->port()) {
             memcpy(data, package->data<char>(), size);
         } else {
-            // TODO: loggar
+            db<Observeds>(WRN) << "Pacote recebido na porta " << package->port() << ", mas era esperado na porta " << port << endl;
         }
 
         _nic->free(buff);
