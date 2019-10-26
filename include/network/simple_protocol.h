@@ -1,5 +1,3 @@
-// EPOS IP Protocol Declarations
-
 #ifndef __simple_protocol_h
 #define __simple_protocol_h
 
@@ -22,47 +20,18 @@ public:
 
 public:
 
-    // TODO: comment to compile test
-    // class Header
-    // {
-    //     public:
-    //         Header() {}
-    //         Header(Port from, Port to, bool ack): _from(from), _to(to), _ack(ack) {}
+    class Package {
 
+    private:
 
+        void * _data;
+        unsigned int _port;
 
-    //     protected:
-    //         Port _from;
-    //         Port _to;
-    //         bool _ack;
-    // }
+    public:
 
-    // class Packet
-    // {
-    //     public:
-    //         Packet(){}
-    //         //Packet(Data data):  {}
+        Package(unsigned int port, void * data): _data(data), _port(port) {}
 
-    //         template<typename T>
-    //         T * data() { return reinterpret_cast<T *>(&_data); }
-
-    //     private:
-    //         Data _data;
-    // }
-
-    // class Address
-    // {
-    //     public:
-    //         Address() {}
-    //         //Address(mac, port):  {}
-
-    //         Local local() const { return 0; }
-
-    //     private:
-    //         Port _port;
-    //         //mac
-
-    // };
+    };
 
     Simple_Protocol(unsigned int nic = 0) :
             _nic(Traits<Ethernet>::DEVICES::Get<0>::Result::get(nic))
