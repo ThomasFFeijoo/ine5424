@@ -17,20 +17,19 @@ int main()
 
     cout << "  MAC: " << self << endl;
 
-    char data[5];
+    char data[22];
+    char * text = "my text to say hello\n";
 
     if(self[5] % 2) { // sender
         Delay (5000000);
 
         for(int i = 0; i < 10; i++) {
-            memset(data, '0' + i, 5);
-            data[4] = '\n';
-            cout << " Sending: " << data;
-            sp->send(Simple_Protocol::Address::BROADCAST, 99, data, 5);
+            cout << " Sending: " << text;
+            sp->send(Simple_Protocol::Address::BROADCAST, 99, text, 22);
         }
     } else { // receiver
         for(int i = 0; i < 10; i++) {
-           sp->receive(99, data, 5);
+           sp->receive(99, data, 22);
            cout << "  Data: " << data;
         }
     }
