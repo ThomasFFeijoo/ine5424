@@ -43,15 +43,14 @@ public:
         return _nic->address();
     }
 
-    int send(const Address & dst, const void * data, unsigned int size) {
-        return _nic->send(dst, Ethernet::PROTO_SP, data, size);
+    void send(const Address & dst, const void * data, unsigned int size) {
+        _nic->send(dst, Ethernet::PROTO_SP, data, size);
     }
 
-    int receive(void * data, unsigned int size) {
+    void receive(void * data, unsigned int size) {
         Buffer * buff = updated();
         memcpy(data, buff->frame()->data<char>(), size);
         _nic->free(buff);
-        return size;
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
