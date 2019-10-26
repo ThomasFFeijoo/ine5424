@@ -1,5 +1,3 @@
-// EPOS NIC Test Programs
-
 #include <machine/nic.h>
 #include <time.h>
 #include <network/simple_protocol.h>
@@ -10,8 +8,8 @@ OStream cout;
 
 int main()
 {
-    cout << "Port Test" << endl;
-    
+    cout << "Port Test Error" << endl;
+
     Simple_Protocol * sp = new Simple_Protocol();
 
     Simple_Protocol::Address self = sp->address();
@@ -23,12 +21,10 @@ int main()
 
     if(self[5] % 2) { // sender
         Delay (5000000);
-
-            cout << " Sending: " << text;
-            sp->send(Simple_Protocol::Address::BROADCAST, 99, text, 22);
-        
+        cout << " Sending: " << text;
+        sp->send(Simple_Protocol::Address::BROADCAST, 99, text, 22);
     } else { // receiver
-           sp->receive(33, data, 22);
-           cout << "  Data: " << data;
+        sp->receive(33, data, 22);
+        cout << "  Data: " << data;
     }
 }
