@@ -65,7 +65,7 @@ public:
             char * ack = (char*) "ack";
             Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
             ack_package->ack(true);
-            _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, 3);
+            _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
         } else {
             db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
         }
