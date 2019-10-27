@@ -36,8 +36,9 @@ public:
 
     void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         Semaphore sem(0);
-        Package *package = new Package(port, data);
-        for(unsigned int i = 0; i < 3; i++) {
+        bool ack = false;
+        Package *package = new Package(port, data, &ack);
+        for(unsigned int i = 0; (i < 3) && !ack; i++) {
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
@@ -45,6 +46,12 @@ public:
             sem.p();
         }
         
+        if (ack) {
+            db<Thread>(WRN) << "Mensagem confirmada na porta " << port << endl;
+        } else  {
+            db<Thread>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
+            bytes = 0;
+        }
         
     }
 
@@ -73,10 +80,11 @@ public:
 
         void * _data;
         unsigned int _port;
+        bool* _ack;
 
     public:
 
-        Package(unsigned int port, void * data): _data(data), _port(port) {}
+        Package(unsigned int port, void * data, bool* ack): _data(data), _port(port), _ack(ack) {}
 
         unsigned int port() {
             return _port;
@@ -85,6 +93,10 @@ public:
         template<typename T>
         T * data() {
             return reinterpret_cast<T *>(_data);
+        }
+
+        bool* ack() {
+            return _ack;
         }
 
     };
