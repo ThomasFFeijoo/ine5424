@@ -35,8 +35,17 @@ public:
     }
 
     void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
+        Semaphore sem(0);
         Package *package = new Package(port, data);
-        _nic->send(dst, Ethernet::PROTO_SP, package, size);
+        for(unsigned int i = 0; i < 3; i++) {
+            _nic->send(dst, Ethernet::PROTO_SP, package, size);
+
+            Semaphore_Handler handler(&sem);
+            Alarm alarm(Traits<Network>::TIMEOUT * 1000000, &handler, 1);
+            sem.p();
+        }
+        
+        
     }
 
     void receive(unsigned int port, void * data, unsigned int size) {
