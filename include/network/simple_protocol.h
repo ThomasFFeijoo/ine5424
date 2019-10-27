@@ -38,7 +38,7 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
 
-        Package *package = new Package(port, data, &receive_ack, &sem);
+        Package *package = new Package(address(), port, data, &receive_ack, &sem);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
@@ -57,14 +57,16 @@ public:
 
     void receive(unsigned int port, void * data, unsigned int size) {
         Buffer * buff = updated();
-        Package *package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+        Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
 
-        // TODO: mandar ack
+        if (port == receive_package->port()) {
+            memcpy(data, receive_package->data<char>(), size);
 
-        if (port == package->port()) {
-            memcpy(data, package->data<char>(), size);
+            Package *ack_package = new Package(address(), port, "ack", receive_package->receive_ack(), receive_package->semaphore());
+            ack_package->ack(true);
+            _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, 3);
         } else {
-            db<Observeds>(WRN) << "Pacote recebido na porta " << package->port() << ", mas era esperado na porta " << port << endl;
+            db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
         }
 
         _nic->free(buff);
@@ -87,8 +89,9 @@ public:
 
     private:
 
-        void * _data;
+        Address _from;
         unsigned int _port;
+        void * _data;
         // define if the package is an ack
         bool* _ack = false;
         // define if the package received is an ack, used to control retries of send
@@ -98,8 +101,12 @@ public:
 
     public:
 
-        Package(unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore):
-            _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
+        Package(Address from, unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore):
+            _from(from), _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
+
+        Address from() {
+            return _from;
+        }
 
         unsigned int port() {
             return _port;
