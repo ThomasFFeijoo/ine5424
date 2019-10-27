@@ -37,27 +37,32 @@ public:
     void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         Semaphore sem(0);
         bool ack = false;
+
+        // TODO: passar semáforo aqui
         Package *package = new Package(port, data, &ack);
-        for(unsigned int i = 0; (i < 3) && !ack; i++) {
+
+        // TODO: usar traits correto aqui
+        for (unsigned int i = 0; (i < 3) && !ack; i++) {
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
+            // TODO usar traits correto aqui
             Alarm alarm(Traits<Network>::TIMEOUT * 1000000, &handler, 1);
             sem.p();
         }
-        
+
         if (ack) {
             db<Observeds>(WRN) << "Mensagem confirmada na porta " << port << endl;
         } else  {
             db<Observeds>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
-            bytes = 0;
         }
-        
     }
 
     void receive(unsigned int port, void * data, unsigned int size) {
         Buffer * buff = updated();
         Package *package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+
+        // TODO: mandar ack
 
         if (port == package->port()) {
             memcpy(data, package->data<char>(), size);
@@ -70,9 +75,11 @@ public:
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         Package *package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-        if(package->ack()) {
+        if (package->ack()) {
+            // TODO: mudar ack
             db<Observeds>(WRN) << "ack no update" << endl;
         }
+
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
     }
 
