@@ -47,9 +47,9 @@ public:
         }
         
         if (ack) {
-            db<Thread>(WRN) << "Mensagem confirmada na porta " << port << endl;
+            db<Observeds>(WRN) << "Mensagem confirmada na porta " << port << endl;
         } else  {
-            db<Thread>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
+            db<Observeds>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
             bytes = 0;
         }
         
@@ -69,6 +69,10 @@ public:
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
+        Package *package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+        if(package->ack()) {
+            db<Observeds>(WRN) << "ack no update" << endl;
+        }
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
     }
 
