@@ -73,8 +73,9 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         Package *package = reinterpret_cast<Package*>(buff->frame()->data<char>());
         if (package->ack()) {
-            // TODO: mudar ack
-            db<Observeds>(WRN) << "ack no update" << endl;
+            db<Observeds>(INF) << "ack no update" << endl;
+            package->receive_ack(true);
+            package->semaphore()->v();
         }
 
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
@@ -113,8 +114,16 @@ public:
             return _ack;
         }
 
+        Semaphore * semaphore() {
+            return _semaphore;
+        }
+
         void ack(bool * ack) {
             _ack = ack;
+        }
+
+        void receive_ack(bool * receive_ack) {
+            _receive_ack = receive_ack;
         }
 
     };
