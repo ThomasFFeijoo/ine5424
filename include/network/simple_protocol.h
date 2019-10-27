@@ -38,8 +38,7 @@ public:
         Semaphore sem(0);
         bool ack = false;
 
-        // TODO: passar semáforo aqui
-        Package *package = new Package(port, data, &ack);
+        Package *package = new Package(port, data, &ack, &sem);
 
         // TODO: usar traits correto aqui
         for (unsigned int i = 0; (i < 3) && !ack; i++) {
@@ -92,10 +91,12 @@ public:
         void * _data;
         unsigned int _port;
         bool* _ack;
+        Semaphore * _semaphore;
 
     public:
 
-        Package(unsigned int port, void * data, bool* ack): _data(data), _port(port), _ack(ack) {}
+        Package(unsigned int port, void * data, bool* ack, Semaphore * semaphore):
+            _data(data), _port(port), _ack(ack), _semaphore(semaphore) {}
 
         unsigned int port() {
             return _port;
