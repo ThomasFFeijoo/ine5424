@@ -17,7 +17,7 @@ int main()
     cout << "  MAC: " << self << endl;
 
     char data[22];
-    char * text = "my text to say hello\n";
+    char * text = (char*) "my text to say hello\n";
 
     if(self[5] % 2) { // sender
         Delay (5000000);

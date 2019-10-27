@@ -62,7 +62,8 @@ public:
         if (port == receive_package->port()) {
             memcpy(data, receive_package->data<char>(), size);
 
-            Package *ack_package = new Package(address(), port, "ack", receive_package->receive_ack(), receive_package->semaphore());
+            char * ack = (char*) "ack";
+            Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
             ack_package->ack(true);
             _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, 3);
         } else {
@@ -73,10 +74,10 @@ public:
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
-        Package *package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+        Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
         if (package->ack()) {
             db<Observeds>(INF) << "ack no update" << endl;
-            package->receive_ack(true);
+            package->receive_ack_to_write() = true;
             package->semaphore()->v();
         }
 
@@ -93,7 +94,7 @@ public:
         unsigned int _port;
         void * _data;
         // define if the package is an ack
-        bool* _ack = false;
+        bool _ack = false;
         // define if the package received is an ack, used to control retries of send
         // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
         bool* _receive_ack;
@@ -117,20 +118,24 @@ public:
             return reinterpret_cast<T *>(_data);
         }
 
-        bool* ack() {
+        bool ack() {
             return _ack;
+        }
+
+        bool * receive_ack() {
+            return _receive_ack;
         }
 
         Semaphore * semaphore() {
             return _semaphore;
         }
 
-        void ack(bool * ack) {
+        void ack(bool ack) {
             _ack = ack;
         }
 
-        void receive_ack(bool * receive_ack) {
-            _receive_ack = receive_ack;
+        bool & receive_ack_to_write() {
+            return *_receive_ack;
         }
 
     };
