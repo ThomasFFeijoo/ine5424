@@ -40,13 +40,11 @@ public:
 
         Package *package = new Package(port, data, &ack, &sem);
 
-        // TODO: usar traits correto aqui
-        for (unsigned int i = 0; (i < 3) && !ack; i++) {
+        for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !ack; i++) {
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
-            // TODO usar traits correto aqui
-            Alarm alarm(Traits<Network>::TIMEOUT * 1000000, &handler, 1);
+            Alarm alarm(Traits<Simple_Protocol>::SP_TIMEOUT * 1000000, &handler, 1);
             sem.p();
         }
 

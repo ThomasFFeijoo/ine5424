@@ -229,6 +229,12 @@ template<> struct Traits<TSTP>: public Traits<Network>
     static const unsigned int RADIO_RANGE = 8000; // Approximated radio range in centimeters
 };
 
+template<> struct Traits<Simple_Protocol>: public Traits<Network>
+{
+    static const unsigned int SP_TIMEOUT  = 12; // seconds, need be * by 10^6 to use in Alarm
+    static const unsigned int SP_RETRIES  = 4;
+};
+
 template<> struct Traits<IP>: public Traits<Network>
 {
     static const bool enabled = NETWORKS::Count<IP>::Result;
