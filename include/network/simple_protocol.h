@@ -36,11 +36,11 @@ public:
 
     void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         Semaphore sem(0);
-        bool ack = false;
+        bool receive_ack = false;
 
-        Package *package = new Package(port, data, &ack, &sem);
+        Package *package = new Package(port, data, &receive_ack, &sem);
 
-        for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !ack; i++) {
+        for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
@@ -48,8 +48,8 @@ public:
             sem.p();
         }
 
-        if (ack) {
-            db<Observeds>(WRN) << "Mensagem confirmada na porta " << port << endl;
+        if (receive_ack) {
+            db<Observeds>(INF) << "Mensagem confirmada na porta " << port << endl;
         } else  {
             db<Observeds>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
         }
@@ -88,13 +88,17 @@ public:
 
         void * _data;
         unsigned int _port;
-        bool* _ack;
+        // define if the package is an ack
+        bool* _ack = false;
+        // define if the package received is an ack, used to control retries of send
+        // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
+        bool* _receive_ack;
         Semaphore * _semaphore;
 
     public:
 
-        Package(unsigned int port, void * data, bool* ack, Semaphore * semaphore):
-            _data(data), _port(port), _ack(ack), _semaphore(semaphore) {}
+        Package(unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore):
+            _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
 
         unsigned int port() {
             return _port;
@@ -107,6 +111,10 @@ public:
 
         bool* ack() {
             return _ack;
+        }
+
+        void ack(bool * ack) {
+            _ack = ack;
         }
 
     };
