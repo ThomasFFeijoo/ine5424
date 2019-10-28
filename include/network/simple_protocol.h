@@ -42,6 +42,7 @@ public:
         Package *package = new Package(address(), port, data, &receive_ack, &sem);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
+            db<Observeds>(WRN) << "Tentativa numero: " << i + 1 << endl;
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
@@ -59,18 +60,18 @@ public:
     void receive(unsigned int port, void * data, unsigned int size) {
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+        if(receive_package->port() != 2) { // drop message if port 2
+            if (port == receive_package->port()) {
+                memcpy(data, receive_package->data<char>(), size);
 
-        if (port == receive_package->port()) {
-            memcpy(data, receive_package->data<char>(), size);
-
-            char * ack = (char*) "ack";
-            Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
-            ack_package->ack(true);
-            _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
-        } else {
-            db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+                char * ack = (char*) "ack";
+                Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
+                ack_package->ack(true);
+                _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+            } else {
+                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+            }
         }
-
         _nic->free(buff);
     }
 
