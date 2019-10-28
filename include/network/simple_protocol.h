@@ -4,6 +4,7 @@
 #include <system/config.h>
 #include <machine/nic.h>
 #include <synchronizer.h>
+#include <time.h>
 
 __BEGIN_SYS
 
@@ -49,7 +50,7 @@ public:
         }
 
         if (receive_ack) {
-            db<Observeds>(INF) << "Mensagem confirmada na porta " << port << endl;
+            db<Observeds>(WRN) << "Mensagem confirmada na porta " << port << endl;
         } else  {
             db<Observeds>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
         }
@@ -76,7 +77,7 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
         if (package->ack()) {
-            db<Observeds>(INF) << "ack no update" << endl;
+            db<Observeds>(WRN) << "ack no update" << endl;
             package->receive_ack_to_write() = true;
             package->semaphore()->v();
         }
