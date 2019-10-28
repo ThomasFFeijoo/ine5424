@@ -16,15 +16,21 @@ int main()
 
     cout << "  MAC: " << self << endl;
 
-    char data[22];
+    // XXX: mudar para constante
+    char data[1500];
     char * text = (char*) "my text to say hello\n";
 
     if(self[5] % 2) { // sender
         Delay (5000000);
-        cout << " Sending: " << text;
-        sp->send(Simple_Protocol::Address::BROADCAST, 99, text, 22);
+        cout << "  Sending: " << text;
+
+        Simple_Protocol::Address other = self;
+        other[5]--;
+        cout << "  To: " << other;
+
+        sp->send(other, 99, text, 1500);
     } else { // receiver
-        sp->receive(99, data, 22);
+        sp->receive(99, data, 1500);
         cout << "  Data: " << data;
     }
 }
