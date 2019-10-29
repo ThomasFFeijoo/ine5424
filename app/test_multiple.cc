@@ -8,8 +8,7 @@ OStream cout;
 
 Simple_Protocol * sp;
 Simple_Protocol::Address self;
-const int MTU = 1500;
-char data[MTU];
+char data[Traits<Simple_Protocol>::MTU];
 
 int sender()
 {
@@ -20,17 +19,17 @@ int sender()
     for(int port = 10; port < 15; port++) {
       cout << "SENDING " << text << endl;
       cout << "Enviado para a porta " << port << endl;
-      sp->send(other, port, text, MTU);
+      sp->send(other, port, text, Traits<Simple_Protocol>::MTU);
     }
 }
 
 int receiver()
 {
     for(int port = 10; port < 15; port++) {
-        sp->receive(port, data, 1500);
+        sp->receive(port, data, Traits<Simple_Protocol>::MTU);
         cout << "Recebido na porta: " << port << endl;
         cout << " Data: " << data << endl;
-        
+
         }
 }
 

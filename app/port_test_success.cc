@@ -16,8 +16,7 @@ int main()
 
     cout << "  MAC: " << self << endl;
 
-    // XXX: mudar para constante
-    char data[1500];
+    char data[Traits<Simple_Protocol>::MTU];
     char * text = (char*) "my text to say hello\n";
 
     if(self[5] % 2) { // sender
@@ -26,11 +25,11 @@ int main()
 
         Simple_Protocol::Address other = self;
         other[5]--;
-        cout << "  To: " << other;
+        cout << "  To: " << other << "\n";
 
-        sp->send(other, 99, text, 1500);
+        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
     } else { // receiver
-        sp->receive(99, data, 1500);
+        sp->receive(99, data, Traits<Simple_Protocol>::MTU);
         cout << "  Data: " << data;
     }
 }
