@@ -84,6 +84,7 @@ public:
             db<Observeds>(WRN) << "ack no update do sender" << endl;
             package->receive_ack_to_write() = true;
             package->semaphore()->v();
+            _nic->free(buf);
         }
 
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
