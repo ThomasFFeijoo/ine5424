@@ -42,7 +42,7 @@ public:
         Package *package = new Package(address(), port, data, &receive_ack, &sem);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
-            db<Observeds>(WRN) << "Tentativa numero: " << i + 1 << endl;
+            db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
@@ -68,6 +68,8 @@ public:
                 Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
                 ack_package->ack(true);
                 _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
+                db<Observeds>(WRN) << "ack enviado" << endl;
             } else {
                 db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
             }
@@ -76,9 +78,10 @@ public:
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
+        db<Observeds>(WRN) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
         if (package->ack()) {
-            db<Observeds>(WRN) << "ack no update" << endl;
+            db<Observeds>(WRN) << "ack no update do sender" << endl;
             package->receive_ack_to_write() = true;
             package->semaphore()->v();
         }
