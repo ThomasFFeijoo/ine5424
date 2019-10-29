@@ -8,7 +8,7 @@ OStream cout;
 
 int main()
 {
-    cout << "Port Test Success" << endl;
+    cout << "Retry Test " << endl;
 
     Simple_Protocol * sp = new Simple_Protocol();
 
@@ -25,7 +25,7 @@ int main()
 
         Simple_Protocol::Address other = self;
         other[5]--;
-        cout << "  To: " << other;
+        cout << "  To: " << other << "\n";
 
         sp->send(other, 2, text, Traits<Simple_Protocol>::MTU);
     } else { // receiver

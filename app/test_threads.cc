@@ -33,6 +33,7 @@ int main()
     sp = new Simple_Protocol();
     self = sp->address();
 
+    cout << "Threads Test " << endl;
     cout << "  MAC: " << self << endl;
 
     if(self[5] % 2) { // sender
