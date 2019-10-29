@@ -11,25 +11,28 @@ OStream cout;
 int main()
 {
     cout << "NIC Test" << endl;
+
     Simple_Protocol * sp = new Simple_Protocol();
 
     Simple_Protocol::Address self = sp->address();
 
     cout << "  MAC: " << self << endl;
 
-    char data[22];
-    char * text = "my text to say hello\n";
+    char data[Traits<Simple_Protocol>::MTU];
+    char * text = (char*) "my text to say hello\n";
 
     if(self[5] % 2) { // sender
         Delay (5000000);
-
-        for(int i = 0; i < 10; i++) {
+        Simple_Protocol::Address other = self;
+        other[5]--;
+        cout << "  To: " << other << "\n";
+        for(int i = 10; i < 100; i++) {
             cout << " Sending: " << text;
-            sp->send(Simple_Protocol::Address::BROADCAST, 99, text, 22);
+            sp->send(other, i, text, Traits<Simple_Protocol>::MTU);
         }
     } else { // receiver
-        for(int i = 0; i < 10; i++) {
-           sp->receive(99, data, 22);
+        for(int i = 10; i < 100; i++) {
+           sp->receive(i, data, Traits<Simple_Protocol>::MTU);
            cout << "  Data: " << data;
         }
     }

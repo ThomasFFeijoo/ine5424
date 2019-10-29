@@ -17,14 +17,19 @@ int main()
     cout << "  MAC: " << self << endl;
 
     char data[Traits<Simple_Protocol>::MTU];
-    char * text = "my text to say hello\n";
+    char * text = (char*) "my text to say hello\n";
 
     if(self[5] % 2) { // sender
         Delay (5000000);
-        cout << " Sending: " << text;
-        sp->send(Simple_Protocol::Address::BROADCAST, 99, text, Traits<Simple_Protocol>::MTU);
+        cout << "  Sending: " << text;
+
+        Simple_Protocol::Address other = self;
+        other[5]--;
+        cout << "  To: " << other << "\n";
+
+        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
     } else { // receiver
-        sp->receive(33, data, Traits<Simple_Protocol>::MTU);
+        sp->receive(66, data, Traits<Simple_Protocol>::MTU);
         cout << "  Data: " << data;
     }
 }
