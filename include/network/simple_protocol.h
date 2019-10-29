@@ -57,7 +57,7 @@ public:
         }
     }
 
-    void receive(unsigned int port, void * data, unsigned int size) {
+    void receive(unsigned int port, void * data, unsigned int size, unsigned int tentativa) {
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
         if(receive_package->port() != 2) { // drop message if port 2
@@ -67,7 +67,13 @@ public:
                 char * ack = (char*) "ack";
                 Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
                 ack_package->ack(true);
-                _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                if(port == 10 && tentativa != 1) {
+                    _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                }
+                if(port != 10) {
+                    _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                }
+                
             } else {
                 db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
             }

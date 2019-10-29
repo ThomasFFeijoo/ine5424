@@ -26,12 +26,15 @@ int sender()
 
 int receiver()
 {
+  for(int i = 1; i < 4; i++) {
     for(int port = 10; port < 15; port++) {
-        sp->receive(port, data, 1500);
-        cout << "Recebido na porta: " << port << endl;
-        cout << " Data: " << data << endl;
-        
-        }
+            sp->receive(port, data, 1500, i);
+            cout << "Recebido na porta: " << port << endl;
+            cout << " Data: " << data << endl; 
+    }
+    Delay (5000000);
+  }
+    
 }
 
 
