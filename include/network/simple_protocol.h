@@ -22,7 +22,6 @@ public:
     typedef Ethernet::Address Address;
     typedef Data_Observer<Buffer, Protocol> Observer;
     typedef Data_Observed<Buffer, Protocol> Observed;
-
 public:
 
     Simple_Protocol(unsigned int nic = 0) :
@@ -38,8 +37,8 @@ public:
     void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         Semaphore sem(0);
         bool receive_ack = false;
-
-        Package *package = new Package(address(), port, data, &receive_ack, &sem);
+        int current_sent_id = getCurrentSenderId () ++;
+        Package *package = new Package(address(), port, data, &receive_ack, &sem, current_sent_id);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
             db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
@@ -58,23 +57,29 @@ public:
     }
 
     void receive(unsigned int port, void * data, unsigned int size) {
-        Buffer * buff = updated();
-        Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-        if(receive_package->port() != 2) { // drop message if port 2
-            if (port == receive_package->port()) {
-                memcpy(data, receive_package->data<char>(), size);
+        for(int i = 0; i < 4; i++) {
+            Buffer * buff = updated();
+            Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+            
+            if(receive_package->port() != 2) { // drop message if port 2
+                if (port == receive_package->port()) {
+                    memcpy(data, receive_package->data<char>(), size);
 
-                char * ack = (char*) "ack";
-                Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
-                ack_package->ack(true);
-                _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
-                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
-                db<Observeds>(WRN) << "ack enviado" << endl;
-            } else {
-                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+                    char * ack = (char*) "ack";
+                    Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore(), receive_package->id());
+                    ack_package->ack(true);
+                    _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                    db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
+                    db<Observeds>(WRN) << "ack enviado" << endl;
+                } else {
+                    db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+                }
             }
+            _nic->free(buff);
+            if(getCurrentReceiverId() != receive_package->id()) break;
+            Delay (5000000);
         }
-        _nic->free(buff);
+        getCurrentReceiverId () ++;
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
@@ -88,6 +93,18 @@ public:
         }
 
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
+    }
+
+    static int & getCurrentSenderId ()
+    {
+       static int current_send_id = 0;
+       return current_send_id;
+    }
+
+    static int & getCurrentReceiverId ()
+    {
+       static int current_receiver_id = 1;
+       return current_receiver_id;
     }
 
 public:
@@ -104,12 +121,13 @@ public:
         // define if the package received is an ack, used to control retries of send
         // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
         bool* _receive_ack;
+        unsigned int _id;
         Semaphore * _semaphore;
 
     public:
 
-        Package(Address from, unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore):
-            _from(from), _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
+        Package(Address from, unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore, unsigned int id):
+            _from(from), _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore), _id(id) {}
 
         Address from() {
             return _from;
@@ -117,6 +135,10 @@ public:
 
         unsigned int port() {
             return _port;
+        }
+
+        unsigned int id() {
+            return _id;
         }
 
         template<typename T>
