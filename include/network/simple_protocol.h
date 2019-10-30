@@ -38,6 +38,7 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
         int current_sent_id = getCurrentSenderId () ++;
+        db<Observeds>(WRN) << "CURRENT_ID: " << current_sent_id << endl;
         Package *package = new Package(address(), port, data, &receive_ack, &sem, current_sent_id);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
@@ -57,29 +58,46 @@ public:
     }
 
     void receive(unsigned int port, void * data, unsigned int size) {
-        for(int i = 0; i < 4; i++) {
-            Buffer * buff = updated();
-            Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-            
-            if(receive_package->port() != 2) { // drop message if port 2
-                if (port == receive_package->port()) {
-                    memcpy(data, receive_package->data<char>(), size);
-
+            for(int i = 0; i < 2; i++){
+                Buffer * buff = updated();
+                Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+                
+                if(getCurrentReceiverId() == receive_package->id())   // É UM RETRY
+                {
                     char * ack = (char*) "ack";
-                    Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore(), receive_package->id());
+                    Package *ack_package = new Package(address(), receive_package->port(), ack, receive_package->receive_ack(), receive_package->semaphore(), receive_package->id());
                     ack_package->ack(true);
                     _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
-                    db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
-                    db<Observeds>(WRN) << "ack enviado" << endl;
+                    _nic->free(buff);
+                    i--;
                 } else {
-                    db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+                    if (port == receive_package->port()) {
+                        memcpy(data, receive_package->data<char>(), size);
+
+                        char * ack = (char*) "ack";
+                        Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore(), receive_package->id());
+                        ack_package->ack(true);
+                        if(port == 5 && i == 1) {
+                            _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                        }
+                        if(port != 5) {
+                            _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                        }
+                        
+                        db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
+                        db<Observeds>(WRN) << "ack enviado" << endl;
+                        getCurrentReceiverId () ++; //0
+                        _nic->free(buff);
+                        break;
+                    } else {
+                        db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+                        _nic->free(buff);
+                        break;
+                    }
                 }
+
             }
-            _nic->free(buff);
-            if(getCurrentReceiverId() != receive_package->id()) break;
-            Delay (5000000);
-        }
-        getCurrentReceiverId () ++;
+            
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
@@ -97,13 +115,13 @@ public:
 
     static int & getCurrentSenderId ()
     {
-       static int current_send_id = 0;
+       static int current_send_id = 1;
        return current_send_id;
     }
 
     static int & getCurrentReceiverId ()
     {
-       static int current_receiver_id = 1;
+       static int current_receiver_id = 0;
        return current_receiver_id;
     }
 

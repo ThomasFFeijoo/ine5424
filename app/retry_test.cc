@@ -26,10 +26,14 @@ int main()
         Simple_Protocol::Address other = self;
         other[5]--;
         cout << "  To: " << other << "\n";
-
-        sp->send(other, 2, text, Traits<Simple_Protocol>::MTU);
+        for(int i = 5; i <= 6; i++) {
+            sp->send(other, i, text, Traits<Simple_Protocol>::MTU);
+        }
+        
     } else { // receiver
-        sp->receive(2, data, Traits<Simple_Protocol>::MTU);
-        cout << "  Data: " << data;
+        for(int i = 5; i <= 6; i++) {
+            sp->receive(i, data, Traits<Simple_Protocol>::MTU);
+            cout << "  Data: " << data;
+        }
     }
 }
