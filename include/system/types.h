@@ -196,7 +196,7 @@ class TCP;
 class DHCP;
 class HTTP;
 class IPC;
-class My_Protocol;
+class Simple_Protocol;
 template<typename Channel, bool connectionless = Channel::connectionless> class Link;
 template<typename Channel, bool connectionless = Channel::connectionless> class Port;
 

@@ -1,17 +1,20 @@
-// EPOS IP Protocol Declarations
-
 #ifndef __simple_protocol_h
 #define __simple_protocol_h
 
 #include <system/config.h>
 #include <machine/nic.h>
 #include <synchronizer.h>
+#include <time.h>
 
 __BEGIN_SYS
 
 class Simple_Protocol:
     private NIC<Ethernet>::Observer,
     private Concurrent_Observer<Ethernet::Buffer, Ethernet::Protocol> {
+
+protected:
+
+    NIC<Ethernet> * _nic;
 
 public:
     typedef Ethernet::Protocol Protocol;
@@ -32,24 +35,116 @@ public:
         return _nic->address();
     }
 
-    int send(const Address & dst, const void * data, unsigned int size) {
-        return _nic->send(dst, Ethernet::PROTO_SP, data, size);
+    void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
+        Semaphore sem(0);
+        bool receive_ack = false;
+
+        Package *package = new Package(address(), port, data, &receive_ack, &sem);
+
+        for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
+            db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
+            _nic->send(dst, Ethernet::PROTO_SP, package, size);
+
+            Semaphore_Handler handler(&sem);
+            Alarm alarm(Traits<Simple_Protocol>::SP_TIMEOUT * 1000000, &handler, 1);
+            sem.p();
+        }
+
+        if (receive_ack) {
+            db<Observeds>(WRN) << "Mensagem confirmada na porta " << port << endl;
+        } else  {
+            db<Observeds>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
+        }
     }
 
-    int receive(void * data, unsigned int size) {
+    void receive(unsigned int port, void * data, unsigned int size) {
         Buffer * buff = updated();
-        memcpy(data, buff->frame()->data<char>(), size);
+        Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
+        if(receive_package->port() != 2) { // drop message if port 2
+            if (port == receive_package->port()) {
+                memcpy(data, receive_package->data<char>(), size);
+
+                char * ack = (char*) "ack";
+                Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
+                ack_package->ack(true);
+                _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
+                db<Observeds>(WRN) << "ack enviado" << endl;
+            } else {
+                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+            }
+        }
         _nic->free(buff);
-        return size;
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
+        db<Observeds>(WRN) << "update executado" << endl;
+        Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
+        if (package->ack()) {
+            db<Observeds>(WRN) << "ack no update do sender" << endl;
+            package->receive_ack_to_write() = true;
+            package->semaphore()->v();
+            _nic->free(buf);
+        }
+
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
     }
 
-protected:
+public:
 
-    NIC<Ethernet> * _nic;
+    class Package {
+
+    private:
+
+        Address _from;
+        unsigned int _port;
+        void * _data;
+        // define if the package is an ack
+        bool _ack = false;
+        // define if the package received is an ack, used to control retries of send
+        // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
+        bool* _receive_ack;
+        Semaphore * _semaphore;
+
+    public:
+
+        Package(Address from, unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore):
+            _from(from), _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
+
+        Address from() {
+            return _from;
+        }
+
+        unsigned int port() {
+            return _port;
+        }
+
+        template<typename T>
+        T * data() {
+            return reinterpret_cast<T *>(_data);
+        }
+
+        bool ack() {
+            return _ack;
+        }
+
+        bool * receive_ack() {
+            return _receive_ack;
+        }
+
+        Semaphore * semaphore() {
+            return _semaphore;
+        }
+
+        void ack(bool ack) {
+            _ack = ack;
+        }
+
+        bool & receive_ack_to_write() {
+            return *_receive_ack;
+        }
+
+    };
 
 };
 
