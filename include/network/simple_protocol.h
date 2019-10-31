@@ -25,6 +25,30 @@ public:
 
 public:
 
+    enum result_code {
+        SUCCESS_SEND       = 1,
+        SUCCESS_ACK        = 2,
+        ERROR_SEND         = 10,
+        ERROR_RECEIVE_PORT = 11
+    };
+
+    char * text_from_result_code(result_code code) {
+        switch (code) {
+            case SUCCESS_SEND:
+                return (char *) "Mensagem enviada com sucesso";
+            case SUCCESS_ACK:
+                return (char *) "ack enviado com sucesso";
+            case ERROR_SEND:
+                return (char *) "Falhar ao enviar mensagem";
+            case ERROR_RECEIVE_PORT:
+                return (char *) "Mensagem recebida na porta errada";
+            default:
+                return (char *) "Código de resultado desconhecido";
+        }
+    }
+
+public:
+
     Simple_Protocol(unsigned int nic = 0) :
             _nic(Traits<Ethernet>::DEVICES::Get<0>::Result::get(nic))
     {
@@ -35,14 +59,14 @@ public:
         return _nic->address();
     }
 
-    void send(const Address & dst, unsigned int port, void * data, unsigned int size) {
+    result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         Semaphore sem(0);
         bool receive_ack = false;
 
         Package *package = new Package(address(), port, data, &receive_ack, &sem);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
-            db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
+            db<Observeds>(INF) << "Tentativa de envio numero: " << i + 1 << endl;
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
@@ -50,14 +74,11 @@ public:
             sem.p();
         }
 
-        if (receive_ack) {
-            db<Observeds>(WRN) << "Mensagem confirmada na porta " << port << endl;
-        } else  {
-            db<Observeds>(WRN) << "Falha ao enviar mensagem na porta " << port << endl;
-        }
+        return receive_ack ? SUCCESS_SEND : ERROR_SEND;
     }
 
-    void receive(unsigned int port, void * data, unsigned int size) {
+    result_code receive(unsigned int port, void * data, unsigned int size) {
+        result_code code;
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
         if(receive_package->port() != 2) { // drop message if port 2
@@ -68,20 +89,20 @@ public:
                 Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
                 ack_package->ack(true);
                 _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
-                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << endl;
-                db<Observeds>(WRN) << "ack enviado" << endl;
+                code = SUCCESS_ACK;
             } else {
-                db<Observeds>(WRN) << "Pacote recebido na porta " << receive_package->port() << ", mas era esperado na porta " << port << endl;
+                code = ERROR_RECEIVE_PORT;
             }
         }
         _nic->free(buff);
+        return code;
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
-        db<Observeds>(WRN) << "update executado" << endl;
+        db<Observeds>(INF) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
         if (package->ack()) {
-            db<Observeds>(WRN) << "ack no update do sender" << endl;
+            db<Observeds>(INF) << "ack no update do sender" << endl;
             package->receive_ack_to_write() = true;
             package->semaphore()->v();
             _nic->free(buf);
