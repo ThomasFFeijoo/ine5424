@@ -63,7 +63,8 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
 
-        Package *package = new Package(address(), port, data, &receive_ack, &sem);
+        Header *package_header = new Header(address(), port, &receive_ack, &sem);
+        Package *package = new Package(package_header, data);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
             db<Observeds>(INF) << "Tentativa de envio numero: " << i + 1 << endl;
@@ -81,14 +82,15 @@ public:
         result_code code;
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-        if(receive_package->port() != 2) { // drop message if port 2
-            if (port == receive_package->port()) {
+        if(receive_package->header()->port() != 2) { // drop message if port 2
+            if (port == receive_package->header()->port()) {
                 memcpy(data, receive_package->data<char>(), size);
 
                 char * ack = (char*) "ack";
-                Package *ack_package = new Package(address(), port, ack, receive_package->receive_ack(), receive_package->semaphore());
-                ack_package->ack(true);
-                _nic->send(receive_package->from(), Ethernet::PROTO_SP, ack_package, size);
+                Header *package_header = new Header(address(), port, receive_package->header()->receive_ack(), receive_package->header()->semaphore());
+                Package *ack_package = new Package(package_header, ack);
+                ack_package->header()->ack(true);
+                _nic->send(receive_package->header()->from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
             } else {
                 code = ERROR_RECEIVE_PORT;
@@ -101,10 +103,10 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         db<Observeds>(INF) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
-        if (package->ack()) {
+        if (package->header()->ack()) {
             db<Observeds>(INF) << "ack no update do sender" << endl;
-            package->receive_ack_to_write() = true;
-            package->semaphore()->v();
+            package->header()->receive_ack_to_write() = true;
+            package->header()->semaphore()->v();
             _nic->free(buf);
         }
 
@@ -113,13 +115,12 @@ public:
 
 public:
 
-    class Package {
+    class Header {
 
     private:
 
         Address _from;
         unsigned int _port;
-        void * _data;
         // define if the package is an ack
         bool _ack = false;
         // define if the package received is an ack, used to control retries of send
@@ -129,8 +130,8 @@ public:
 
     public:
 
-        Package(Address from, unsigned int port, void * data, bool* receive_ack, Semaphore * semaphore):
-            _from(from), _data(data), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
+        Header(Address from, unsigned int port, bool* receive_ack, Semaphore * semaphore):
+            _from(from), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
 
         Address from() {
             return _from;
@@ -138,11 +139,6 @@ public:
 
         unsigned int port() {
             return _port;
-        }
-
-        template<typename T>
-        T * data() {
-            return reinterpret_cast<T *>(_data);
         }
 
         bool ack() {
@@ -163,6 +159,30 @@ public:
 
         bool & receive_ack_to_write() {
             return *_receive_ack;
+        }
+
+    };
+
+public:
+
+    class Package {
+
+    private:
+
+        Header *_header;
+        void * _data;
+
+    public:
+
+        Package(Header * header, void * data): _header(header), _data(data) {}
+
+        Header * header() {
+            return _header;
+        }
+
+        template<typename T>
+        T * data() {
+            return reinterpret_cast<T *>(_data);
         }
 
     };
