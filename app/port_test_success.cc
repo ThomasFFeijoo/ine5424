@@ -27,9 +27,11 @@ int main()
         other[5]--;
         cout << "  To: " << other << "\n";
 
-        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
+        char * result = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU));
+        cout << "  " << result << "\n";
     } else { // receiver
-        sp->receive(99, data, Traits<Simple_Protocol>::MTU);
+        char * result = sp->text_from_result_code(sp->receive(99, data, Traits<Simple_Protocol>::MTU));
+        cout << "  " << result << "\n";
         cout << "  Data: " << data;
     }
 }
