@@ -63,7 +63,7 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
 
-        Header *package_header = new Header(address(), port, &receive_ack, &sem);
+        Header package_header = Header(address(), port, &receive_ack, &sem);
         Package *package = new Package(package_header, data);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
@@ -82,15 +82,15 @@ public:
         result_code code;
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-        if(receive_package->header()->port() != 2) { // drop message if port 2
-            if (port == receive_package->header()->port()) {
+        if(receive_package->header().port() != 2) { // drop message if port 2
+            if (port == receive_package->header().port()) {
                 memcpy(data, receive_package->data<char>(), size);
 
                 char * ack = (char*) "ack";
-                Header *package_header = new Header(address(), port, receive_package->header()->receive_ack(), receive_package->header()->semaphore());
+                Header package_header = Header(address(), port, receive_package->header().receive_ack(), receive_package->header().semaphore());
                 Package *ack_package = new Package(package_header, ack);
-                ack_package->header()->ack(true);
-                _nic->send(receive_package->header()->from(), Ethernet::PROTO_SP, ack_package, size);
+                ack_package->header().ack(true);
+                _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
             } else {
                 code = ERROR_RECEIVE_PORT;
@@ -103,10 +103,10 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         db<Observeds>(INF) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
-        if (package->header()->ack()) {
+        if (package->header().ack()) {
             db<Observeds>(INF) << "ack no update do sender" << endl;
-            package->header()->receive_ack_to_write() = true;
-            package->header()->semaphore()->v();
+            package->header().receive_ack_to_write() = true;
+            package->header().semaphore()->v();
             _nic->free(buf);
         }
 
@@ -169,14 +169,14 @@ public:
 
     private:
 
-        Header *_header;
+        Header _header;
         void * _data;
 
     public:
 
-        Package(Header * header, void * data): _header(header), _data(data) {}
+        Package(Header header, void * data): _header(header), _data(data) {}
 
-        Header * header() {
+        Header header() {
             return _header;
         }
 
