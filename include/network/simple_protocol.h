@@ -63,18 +63,18 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
         int id = getCurrentSenderId() ++;
-        Header package_header = Header(address(), port, &receive_ack, &sem);
+        Header package_header = Header(address(), port, &receive_ack, &sem, false);
         Package *package = new Package(package_header, data, id);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
-            db<Observeds>(INF) << "Tentativa de envio numero: " << i + 1 << endl;
+            db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
             Alarm alarm(Traits<Simple_Protocol>::SP_TIMEOUT * 1000000, &handler, 1);
             sem.p();
         }
-
+        db<Observeds>(WRN) << "receive ack: " << receive_ack << endl;
         return receive_ack ? SUCCESS_SEND : ERROR_SEND;
     }
 
@@ -87,9 +87,10 @@ public:
                 memcpy(data, receive_package->data<char>(), size);
 
                 char * ack = (char*) "ack";
-                Header package_header = Header(address(), port, receive_package->header().receive_ack(), receive_package->header().semaphore());
+                Header package_header = Header(address(), port, receive_package->header().receive_ack(), receive_package->header().semaphore(), true);
                 Package *ack_package = new Package(package_header, ack, receive_package->id());
-                ack_package->header().ack(true);
+                //ack_package->header().ack(true); for some reason, this isn't working
+                db<Observeds>(WRN) << "mas na verdade é: " << ack_package->header().ack() << endl;
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
                 getCurrentReceiverId() ++;
@@ -102,8 +103,9 @@ public:
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
-        db<Observeds>(INF) << "update executado" << endl;
+        db<Observeds>(WRN) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
+        db<Observeds>(WRN) << package->header().ack() << endl;
         if (package->header().ack()) {
             db<Observeds>(INF) << "ack no update do sender" << endl;
             package->header().receive_ack_to_write() = true;
@@ -143,8 +145,8 @@ public:
 
     public:
 
-        Header(Address from, unsigned int port, bool* receive_ack, Semaphore * semaphore):
-            _from(from), _port(port), _receive_ack(receive_ack), _semaphore(semaphore) {}
+        Header(Address from, unsigned int port, bool* receive_ack, Semaphore * semaphore, bool ack):
+            _from(from), _port(port), _receive_ack(receive_ack), _semaphore(semaphore), _ack(ack) {}
 
         Address from() {
             return _from;
@@ -168,6 +170,7 @@ public:
 
         void ack(bool ack) {
             _ack = ack;
+            db<Observeds>(WRN) << "ack deveria ser: " << _ack << endl;
         }
 
         bool & receive_ack_to_write() {
