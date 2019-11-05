@@ -62,9 +62,9 @@ public:
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         Semaphore sem(0);
         bool receive_ack = false;
-
+        int id = getCurrentSenderId() ++;
         Header package_header = Header(address(), port, &receive_ack, &sem);
-        Package *package = new Package(package_header, data);
+        Package *package = new Package(package_header, data, id);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
             db<Observeds>(INF) << "Tentativa de envio numero: " << i + 1 << endl;
@@ -88,10 +88,11 @@ public:
 
                 char * ack = (char*) "ack";
                 Header package_header = Header(address(), port, receive_package->header().receive_ack(), receive_package->header().semaphore());
-                Package *ack_package = new Package(package_header, ack);
+                Package *ack_package = new Package(package_header, ack, receive_package->id());
                 ack_package->header().ack(true);
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
+                getCurrentReceiverId() ++;
             } else {
                 code = ERROR_RECEIVE_PORT;
             }
@@ -183,10 +184,11 @@ public:
 
         Header _header;
         void * _data;
+        int _id;
 
     public:
 
-        Package(Header header, void * data): _header(header), _data(data) {}
+        Package(Header header, void * data, int id): _header(header), _data(data), _id(id) {}
 
         Header header() {
             return _header;
@@ -195,6 +197,10 @@ public:
         template<typename T>
         T * data() {
             return reinterpret_cast<T *>(_data);
+        }
+
+        int id() {
+            return _id;
         }
 
     };
