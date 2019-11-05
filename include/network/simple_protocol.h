@@ -113,6 +113,18 @@ public:
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
     }
 
+    static int & getCurrentSenderId ()
+    {
+       static int current_send_id = 0;
+       return current_send_id;
+    }
+
+    static int & getCurrentReceiverId ()
+    {
+       static int current_receiver_id = 1;
+       return current_receiver_id;
+    }
+
 public:
 
     class Header {
