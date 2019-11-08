@@ -15,6 +15,7 @@ class Simple_Protocol:
 protected:
 
     NIC<Ethernet> * _nic;
+    
 
 public:
     typedef Ethernet::Protocol Protocol;
@@ -47,6 +48,16 @@ public:
         }
     }
 
+    struct Package_Semaphore {
+        int _package_id;
+        bool *_ack;
+        Semaphore *_sem;
+        
+        Package_Semaphore(int package_id,  bool* ack, Semaphore *sem):
+            _package_id(package_id), _ack(ack), _sem(sem){}
+    };
+    typedef List_Elements::Doubly_Linked_Ordered<Package_Semaphore, int> List_Package_Semaphore;
+
 public:
 
     Simple_Protocol(unsigned int nic = 0) :
@@ -63,8 +74,12 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
         int id = getCurrentSenderId() ++;
-        Header package_header = Header(address(), port, &receive_ack, &sem, false);
+        Header package_header = Header(address(), port, &receive_ack, false);
         Package *package = new Package(package_header, data, id);
+
+        Package_Semaphore * ps = new Package_Semaphore(id, &receive_ack, &sem);
+        List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
+        semaphores.insert(e);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
             db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
@@ -87,10 +102,10 @@ public:
                 memcpy(data, receive_package->data<char>(), size);
 
                 char * ack = (char*) "ack";
-                Header package_header = Header(address(), port, receive_package->header().receive_ack(), receive_package->header().semaphore(), true);
+                Header package_header = Header(address(), port, receive_package->header().receive_ack(), true);
                 Package *ack_package = new Package(package_header, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
-                db<Observeds>(WRN) << "mas na verdade é: " << ack_package->header().ack() << endl;
+                
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
                 getCurrentReceiverId() ++;
@@ -105,11 +120,16 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         db<Observeds>(WRN) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
-        db<Observeds>(WRN) << package->header().ack() << endl;
         if (package->header().ack()) {
-            db<Observeds>(INF) << "ack no update do sender" << endl;
-            package->header().receive_ack_to_write() = true;
-            package->header().semaphore()->v();
+            List_Package_Semaphore * lps = semaphores.search_rank(package->id());
+            if(lps) {
+                db<Observeds>(INF) << "ack no update do sender" << endl;
+                Package_Semaphore * ps = lps->object();
+                ps->_sem->v();
+                semaphores.remove_rank(package->id());
+
+                package->header().receive_ack_to_write() = true;
+            }
             _nic->free(buf);
         }
 
@@ -128,6 +148,9 @@ public:
        return current_receiver_id;
     }
 
+protected:
+    Ordered_List<Package_Semaphore, int> semaphores;
+
 public:
 
     class Header {
@@ -141,12 +164,11 @@ public:
         // define if the package received is an ack, used to control retries of send
         // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
         bool* _receive_ack;
-        Semaphore * _semaphore;
-
+        
     public:
 
-        Header(Address from, unsigned int port, bool* receive_ack, Semaphore * semaphore, bool ack):
-            _from(from), _port(port), _receive_ack(receive_ack), _semaphore(semaphore), _ack(ack) {}
+        Header(Address from, unsigned int port, bool* receive_ack, bool ack):
+            _from(from), _port(port), _receive_ack(receive_ack),  _ack(ack) {}
 
         Address from() {
             return _from;
@@ -164,13 +186,10 @@ public:
             return _receive_ack;
         }
 
-        Semaphore * semaphore() {
-            return _semaphore;
-        }
+    
 
         void ack(bool ack) {
             _ack = ack;
-            db<Observeds>(WRN) << "ack deveria ser: " << _ack << endl;
         }
 
         bool & receive_ack_to_write() {
@@ -209,6 +228,8 @@ public:
     };
 
 };
+
+
 
 __END_SYS
 
