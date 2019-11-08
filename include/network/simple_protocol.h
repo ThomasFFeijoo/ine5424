@@ -26,6 +26,10 @@ public:
 
 public:
 
+    static const char NORMAL_MSG    = '0';
+    static const char ACK_MSG       = '1';
+    static const char SYNC_TEMP_MSG = '2';
+
     enum result_code {
         SUCCESS_SEND       = 1,
         SUCCESS_ACK        = 2,
@@ -102,7 +106,7 @@ public:
                 memcpy(data, receive_package->data<char>(), size);
 
                 char * ack = (char*) "ack";
-                Header package_header = Header(address(), port, receive_package->header().receive_ack(), true);
+                Header package_header = Header(address(), port, receive_package->header().receive_ack(), ACK_MSG);
                 Package *ack_package = new Package(package_header, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
                 
@@ -120,7 +124,7 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         db<Observeds>(WRN) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
-        if (package->header().ack()) {
+        if (package->header().type() == ACK_MSG) {
             List_Package_Semaphore * lps = semaphores.search_rank(package->id());
             if(lps) {
                 db<Observeds>(INF) << "ack no update do sender" << endl;
@@ -159,16 +163,16 @@ public:
 
         Address _from;
         unsigned int _port;
-        // define if the package is an ack
-        bool _ack = false;
+        // define the type of the package
+        char _type = NORMAL_MSG;
         // define if the package received is an ack, used to control retries of send
         // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
         bool* _receive_ack;
         
     public:
 
-        Header(Address from, unsigned int port, bool* receive_ack, bool ack):
-            _from(from), _port(port), _receive_ack(receive_ack),  _ack(ack) {}
+        Header(Address from, unsigned int port, bool* receive_ack, char type):
+            _from(from), _port(port), _receive_ack(receive_ack),  _type(type) {}
 
         Address from() {
             return _from;
@@ -178,8 +182,8 @@ public:
             return _port;
         }
 
-        bool ack() {
-            return _ack;
+        char type() {
+            return _type;
         }
 
         bool * receive_ack() {
@@ -188,8 +192,8 @@ public:
 
     
 
-        void ack(bool ack) {
-            _ack = ack;
+        void type(char type) {
+            _type = type;
         }
 
         bool & receive_ack_to_write() {
