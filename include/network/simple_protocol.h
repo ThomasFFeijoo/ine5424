@@ -15,7 +15,7 @@ class Simple_Protocol:
 protected:
 
     NIC<Ethernet> * _nic;
-    
+
 
 public:
     typedef Ethernet::Protocol Protocol;
@@ -56,7 +56,7 @@ public:
         int _package_id;
         bool *_ack;
         Semaphore *_sem;
-        
+
         Package_Semaphore(int package_id,  bool* ack, Semaphore *sem):
             _package_id(package_id), _ack(ack), _sem(sem){}
     };
@@ -101,15 +101,21 @@ public:
         result_code code;
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-        if(receive_package->header().port() != 2) { // drop message if port 2
+        // drop message if port 2 (only to test this scenario)
+        if (receive_package->header().port() != 2) {
             if (port == receive_package->header().port()) {
-                memcpy(data, receive_package->data<char>(), size);
+                // we only make a special handling when is to sync time
+                if (receive_package->header().type() == SYNC_TEMP_MSG) {
+                    sync_time();
+                } else {
+                    memcpy(data, receive_package->data<char>(), size);
+                }
 
                 char * ack = (char*) "ack";
                 Header package_header = Header(address(), port, receive_package->header().receive_ack(), ACK_MSG);
                 Package *ack_package = new Package(package_header, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
-                
+
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
                 getCurrentReceiverId() ++;
@@ -155,6 +161,13 @@ public:
 protected:
     Ordered_List<Package_Semaphore, int> semaphores;
 
+private:
+
+    void sync_time() {
+        // TODO: receber tempo via argumento
+        // TODO: sincronizar horário
+    }
+
 public:
 
     class Header {
@@ -168,7 +181,7 @@ public:
         // define if the package received is an ack, used to control retries of send
         // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
         bool* _receive_ack;
-        
+
     public:
 
         Header(Address from, unsigned int port, bool* receive_ack, char type):
@@ -190,7 +203,7 @@ public:
             return _receive_ack;
         }
 
-    
+
 
         void type(char type) {
             _type = type;
