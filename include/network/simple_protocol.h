@@ -83,8 +83,7 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
         int id = getCurrentSenderId() ++;
-        Header package_header = Header(address(), port, &receive_ack, msg_type);
-        Package *package = new Package(package_header, data, id);
+        Package *package = new Package(address(), port, &receive_ack, msg_type, data, id);
 
         Package_Semaphore * ps = new Package_Semaphore(id, &receive_ack, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
@@ -117,8 +116,7 @@ public:
                 }
 
                 char * ack = (char*) "ack";
-                Header package_header = Header(address(), port, receive_package->header().receive_ack(), ACK_MSG);
-                Package *ack_package = new Package(package_header, ack, receive_package->id());
+                Package *ack_package = new Package(address(), port, receive_package->header().receive_ack(), ACK_MSG, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
 
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
@@ -189,6 +187,8 @@ public:
 
     public:
 
+        Header() {}
+
         Header(Address from, unsigned int port, bool* receive_ack, char type):
             _from(from), _port(port), _receive_ack(receive_ack),  _type(type) {}
 
@@ -207,8 +207,6 @@ public:
         bool * receive_ack() {
             return _receive_ack;
         }
-
-
 
         void type(char type) {
             _type = type;
@@ -232,7 +230,10 @@ public:
 
     public:
 
-        Package(Header header, void * data, int id): _header(header), _data(data), _id(id) {}
+        Package(Address from, unsigned int port, bool* receive_ack, char type, void * data, int id):
+            _data(data), _id(id) {
+                _header = Header(from, port, receive_ack, type);
+            }
 
         Header header() {
             return _header;
