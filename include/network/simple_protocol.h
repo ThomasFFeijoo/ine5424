@@ -74,11 +74,16 @@ public:
         return _nic->address();
     }
 
+    // only for backward compatibility
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
+        return send(dst, port, data, size, NORMAL_MSG);
+    }
+
+    result_code send(const Address & dst, unsigned int port, void * data, unsigned int size, char msg_type) {
         Semaphore sem(0);
         bool receive_ack = false;
         int id = getCurrentSenderId() ++;
-        Header package_header = Header(address(), port, &receive_ack, false);
+        Header package_header = Header(address(), port, &receive_ack, msg_type);
         Package *package = new Package(package_header, data, id);
 
         Package_Semaphore * ps = new Package_Semaphore(id, &receive_ack, &sem);
