@@ -121,7 +121,6 @@ public:
 
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
-                getCurrentReceiverId() ++;
             } else {
                 code = ERROR_RECEIVE_PORT;
             }
@@ -153,12 +152,6 @@ public:
     {
        static int current_send_id = 0;
        return current_send_id;
-    }
-
-    static int & getCurrentReceiverId ()
-    {
-       static int current_receiver_id = 1;
-       return current_receiver_id;
     }
 
 protected:
