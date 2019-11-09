@@ -1,5 +1,8 @@
 .svn/
 
+# vscode things
+.vscode/
+
 # Container script
 dockepos
 
