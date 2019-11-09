@@ -83,7 +83,9 @@ public:
         Semaphore sem(0);
         bool receive_ack = false;
         int id = getCurrentSenderId() ++;
-        Package *package = new Package(address(), port, &receive_ack, msg_type, data, id);
+        // TODO: verificar melhor forma de setar tempo
+        int timestamp = 0;
+        Package *package = new Package(address(), port, timestamp, &receive_ack, msg_type, data, id);
 
         Package_Semaphore * ps = new Package_Semaphore(id, &receive_ack, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
@@ -110,13 +112,15 @@ public:
             if (port == receive_package->header().port()) {
                 // we only make a special handling when is to sync time
                 if (receive_package->header().type() == SYNC_TEMP_MSG) {
-                    sync_time();
+                    sync_time(receive_package->header().timestamp());
                 } else {
                     memcpy(data, receive_package->data<char>(), size);
                 }
 
                 char * ack = (char*) "ack";
-                Package *ack_package = new Package(address(), port, receive_package->header().receive_ack(), ACK_MSG, ack, receive_package->id());
+                // TODO: verificar melhor forma de setar tempo
+                int timestamp = 0;
+                Package *ack_package = new Package(address(), port, timestamp, receive_package->header().receive_ack(), ACK_MSG, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
 
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
@@ -159,7 +163,8 @@ protected:
 
 private:
 
-    void sync_time() {
+    void sync_time(int timestamp) {
+        db<Observeds>(WRN) << "timestamp: " << timestamp << endl;
         // TODO: receber tempo via argumento
         // TODO: sincronizar horário
     }
@@ -172,6 +177,7 @@ public:
 
         Address _from;
         unsigned int _port;
+        int _timestamp;
         // define the type of the package
         char _type = NORMAL_MSG;
         // define if the package received is an ack, used to control retries of send
@@ -182,8 +188,8 @@ public:
 
         Header() {}
 
-        Header(Address from, unsigned int port, bool* receive_ack, char type):
-            _from(from), _port(port), _receive_ack(receive_ack),  _type(type) {}
+        Header(Address from, unsigned int port, int timestamp, bool* receive_ack, char type):
+            _from(from), _port(port), _timestamp(timestamp), _receive_ack(receive_ack),  _type(type) {}
 
         Address from() {
             return _from;
@@ -191,6 +197,10 @@ public:
 
         unsigned int port() {
             return _port;
+        }
+
+        int timestamp() {
+            return _timestamp;
         }
 
         char type() {
@@ -223,9 +233,9 @@ public:
 
     public:
 
-        Package(Address from, unsigned int port, bool* receive_ack, char type, void * data, int id):
+        Package(Address from, unsigned int port, int timestamp, bool* receive_ack, char type, void * data, int id):
             _data(data), _id(id) {
-                _header = Header(from, port, receive_ack, type);
+                _header = Header(from, port, timestamp, receive_ack, type);
             }
 
         Header header() {
