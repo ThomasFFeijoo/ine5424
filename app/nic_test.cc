@@ -27,12 +27,14 @@ int main()
         other[5]--;
         cout << "  To: " << other << "\n";
         for(int i = 10; i < 1000; i++) {
-            cout << " Sending: " << text;
-            sp->send(other, i, text, Traits<Simple_Protocol>::MTU);
+            cout << "  Sending: " << text;
+            char * result = sp->text_from_result_code(sp->send(other, i, text, Traits<Simple_Protocol>::MTU));
+            cout << "  " << result << "\n";
         }
     } else { // receiver
         for(int i = 10; i < 1000; i++) {
-           sp->receive(i, data, Traits<Simple_Protocol>::MTU);
+           char * result = sp->text_from_result_code(sp->receive(i, data, Traits<Simple_Protocol>::MTU));
+           cout << "  " << result << "\n";
            cout << "  Data: " << data;
         }
     }
