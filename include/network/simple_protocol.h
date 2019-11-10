@@ -118,7 +118,7 @@ public:
             if (port == receive_package->header().port()) {
                 // we only make a special handling when is to sync time and the sp is slave
                 if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
-                    sync_time(receive_package->header().timestamp());
+                    sync_time(receive_package->header().type(), receive_package->header().timestamp());
                 } else {
                     memcpy(data, receive_package->data<char>(), size);
                 }
@@ -171,15 +171,21 @@ private:
     // default is be a slave
     bool _master = false;
 
+    int _received_timestamp;
+    int _my_timestamp;
+
 private:
 
-    void sync_time(int timestamp) {
-        db<Observeds>(WRN) << "timestamp: " << timestamp << endl;
-        db<Observeds>(WRN) << "master: " << _master << endl;
-        // TODO: sincronizar horário
-        // Propagation_Delay PD = ((T2 - T1) + (T4-T3))/2   acredito que de pra manter apenas (T2 - T1)/2
-        // OFFSET(diferença escravo pro mestre) = (T2 - T1) - PD
-        // new clock = old_clock - offset
+    void sync_time(char msg_type, int timestamp) {
+        if (msg_type == SYNC_TEMP_MSG) {
+            _received_timestamp = timestamp;
+            _my_timestamp = Alarm::elapsed();
+        } else if (msg_type == FOLLOW_UP_SYNC_TEMP_MSG) {
+            int my_timestamp_now = Alarm::elapsed();
+            int pd = ((_received_timestamp - _my_timestamp) + (timestamp - my_timestamp_now)) / 2;
+            int offset = (_received_timestamp - _my_timestamp) - pd;
+            Alarm::elapsed() = my_timestamp_now - offset;
+        }
     }
 
     bool is_slave() {
