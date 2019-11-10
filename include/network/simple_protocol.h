@@ -28,12 +28,7 @@ public:
 
     static const char NORMAL_MSG    = '0';
     static const char ACK_MSG       = '1';
-    static const char SYNC_TEMP_MSG = '2'; // timestamped
-    static const char DELAY_REQ     = '3'; // timestamped
-    static const char FOLLOW_UP     = '4'; // not timestamped  
-    static const char DELAY_RESP    = '5'; // not timestamped
-
-
+    static const char SYNC_TEMP_MSG = '2';
 
     enum result_code {
         SUCCESS_SEND       = 1,
@@ -68,8 +63,8 @@ public:
     typedef List_Elements::Doubly_Linked_Ordered<Package_Semaphore, int> List_Package_Semaphore;
 
 public:
-    // adicionar alguma forma de diferenciar o master dos slaves
-    Simple_Protocol(unsigned int nic = 0) : 
+
+    Simple_Protocol(unsigned int nic = 0) :
             _nic(Traits<Ethernet>::DEVICES::Get<0>::Result::get(nic))
     {
         _nic->attach(this, Ethernet::PROTO_SP);
@@ -105,6 +100,7 @@ public:
             sem.p();
         }
         db<Observeds>(WRN) << "receive ack: " << receive_ack << endl;
+        db<Observeds>(WRN) << "master: " << _master << endl;
         return receive_ack ? SUCCESS_SEND : ERROR_SEND;
     }
 
@@ -163,18 +159,25 @@ public:
        return current_send_id;
     }
 
-protected:
+    void master(bool master) {
+        _master = master;
+    }
+
+private:
+
     Ordered_List<Package_Semaphore, int> semaphores;
+    // default is be a slave
+    bool _master = false;
 
 private:
 
     void sync_time(int timestamp) {
         db<Observeds>(WRN) << "timestamp: " << timestamp << endl;
-        // TODO: receber tempo via argumento
+        db<Observeds>(WRN) << "master: " << _master << endl;
         // TODO: sincronizar horário
         // Propagation_Delay PD = ((T2 - T1) + (T4-T3))/2   acredito que de pra manter apenas (T2 - T1)/2
         // OFFSET(diferença escravo pro mestre) = (T2 - T1) - PD
-        // new clock = old_clock - offset 
+        // new clock = old_clock - offset
     }
 
 public:
