@@ -29,6 +29,7 @@ public:
     static const char NORMAL_MSG    = '0';
     static const char ACK_MSG       = '1';
     static const char SYNC_TEMP_MSG = '2';
+    static const char FOLLOW_UP_SYNC_TEMP_MSG = '3';
 
     enum result_code {
         SUCCESS_SEND       = 1,
@@ -109,7 +110,7 @@ public:
         if (receive_package->header().port() != 2) {
             if (port == receive_package->header().port()) {
                 // we only make a special handling when is to sync time and the sp is slave
-                if (is_slave() && receive_package->header().type() == SYNC_TEMP_MSG) {
+                if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
                     sync_time(receive_package->header().timestamp());
                 } else {
                     memcpy(data, receive_package->data<char>(), size);
@@ -176,6 +177,10 @@ private:
 
     bool is_slave() {
         return !_master;
+    }
+
+    bool is_sync_type_msg(char msg_type) {
+        return msg_type == SYNC_TEMP_MSG || msg_type == FOLLOW_UP_SYNC_TEMP_MSG;
     }
 
 public:
