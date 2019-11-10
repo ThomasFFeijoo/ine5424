@@ -82,9 +82,9 @@ public:
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size, char msg_type) {
         Semaphore sem(0);
         bool receive_ack = false;
+
         int id = getCurrentSenderId() ++;
-        // TODO: verificar melhor forma de setar tempo
-        int timestamp = 0;
+        int timestamp = Alarm::elapsed();
         Package *package = new Package(address(), port, timestamp, &receive_ack, msg_type, data, id);
 
         Package_Semaphore * ps = new Package_Semaphore(id, &receive_ack, &sem);
@@ -119,8 +119,7 @@ public:
                 }
 
                 char * ack = (char*) "ack";
-                // TODO: verificar melhor forma de setar tempo
-                int timestamp = 0;
+                int timestamp = Alarm::elapsed();
                 Package *ack_package = new Package(address(), port, timestamp, receive_package->header().receive_ack(), ACK_MSG, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
 
