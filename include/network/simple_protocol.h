@@ -78,6 +78,11 @@ public:
         return _nic->address();
     }
 
+    // to help the tests
+    int get_time() {
+        return Alarm::elapsed();
+    }
+
     // only for backward compatibility
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         return send(dst, port, data, size, NORMAL_MSG);
