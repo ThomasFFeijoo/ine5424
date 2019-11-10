@@ -54,10 +54,10 @@ public:
 
     struct Package_Semaphore {
         int _package_id;
-        bool *_ack;
+        bool _ack;
         Semaphore *_sem;
 
-        Package_Semaphore(int package_id,  bool* ack, Semaphore *sem):
+        Package_Semaphore(int package_id,  bool ack, Semaphore *sem):
             _package_id(package_id), _ack(ack), _sem(sem){}
     };
     typedef List_Elements::Doubly_Linked_Ordered<Package_Semaphore, int> List_Package_Semaphore;
@@ -81,17 +81,16 @@ public:
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size, char msg_type) {
         Semaphore sem(0);
-        bool receive_ack = false;
 
         int id = getCurrentSenderId() ++;
         int timestamp = Alarm::elapsed();
-        Package *package = new Package(address(), port, timestamp, &receive_ack, msg_type, data, id);
+        Package *package = new Package(address(), port, timestamp, msg_type, data, id);
 
-        Package_Semaphore * ps = new Package_Semaphore(id, &receive_ack, &sem);
+        Package_Semaphore * ps = new Package_Semaphore(id, false, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
         semaphores.insert(e);
 
-        for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !receive_ack; i++) {
+        for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !ps->_ack; i++) {
             db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
@@ -99,9 +98,7 @@ public:
             Alarm alarm(Traits<Simple_Protocol>::SP_TIMEOUT * 1000000, &handler, 1);
             sem.p();
         }
-        db<Observeds>(WRN) << "receive ack: " << receive_ack << endl;
-        db<Observeds>(WRN) << "master: " << _master << endl;
-        return receive_ack ? SUCCESS_SEND : ERROR_SEND;
+        return ps->_ack ? SUCCESS_SEND : ERROR_SEND;
     }
 
     result_code receive(unsigned int port, void * data, unsigned int size) {
@@ -120,7 +117,7 @@ public:
 
                 char * ack = (char*) "ack";
                 int timestamp = Alarm::elapsed();
-                Package *ack_package = new Package(address(), port, timestamp, receive_package->header().receive_ack(), ACK_MSG, ack, receive_package->id());
+                Package *ack_package = new Package(address(), port, timestamp, ACK_MSG, ack, receive_package->id());
                 //ack_package->header().ack(true); for some reason, this isn't working
 
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
@@ -134,7 +131,6 @@ public:
     }
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
-        db<Observeds>(WRN) << "update executado" << endl;
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
         if (package->header().type() == ACK_MSG) {
             List_Package_Semaphore * lps = semaphores.search_rank(package->id());
@@ -142,9 +138,8 @@ public:
                 db<Observeds>(INF) << "ack no update do sender" << endl;
                 Package_Semaphore * ps = lps->object();
                 ps->_sem->v();
+                ps->_ack = true;
                 semaphores.remove_rank(package->id());
-
-                package->header().receive_ack_to_write() = true;
             }
             _nic->free(buf);
         }
@@ -194,16 +189,13 @@ public:
         int _timestamp;
         // define the type of the package
         char _type = NORMAL_MSG;
-        // define if the package received is an ack, used to control retries of send
-        // if _ack is true, then this attribute has the value from a previous package that wasn't a representation of ack
-        bool* _receive_ack;
 
     public:
 
         Header() {}
 
-        Header(Address from, unsigned int port, int timestamp, bool* receive_ack, char type):
-            _from(from), _port(port), _timestamp(timestamp), _receive_ack(receive_ack),  _type(type) {}
+        Header(Address from, unsigned int port, int timestamp, char type):
+            _from(from), _port(port), _timestamp(timestamp), _type(type) {}
 
         Address from() {
             return _from;
@@ -221,16 +213,8 @@ public:
             return _type;
         }
 
-        bool * receive_ack() {
-            return _receive_ack;
-        }
-
         void type(char type) {
             _type = type;
-        }
-
-        bool & receive_ack_to_write() {
-            return *_receive_ack;
         }
 
     };
@@ -247,9 +231,9 @@ public:
 
     public:
 
-        Package(Address from, unsigned int port, int timestamp, bool* receive_ack, char type, void * data, int id):
+        Package(Address from, unsigned int port, int timestamp, char type, void * data, int id):
             _data(data), _id(id) {
-                _header = Header(from, port, timestamp, receive_ack, type);
+                _header = Header(from, port, timestamp, type);
             }
 
         Header header() {
