@@ -35,7 +35,8 @@ public:
         SUCCESS_SEND       = 1,
         SUCCESS_ACK        = 2,
         ERROR_SEND         = 10,
-        ERROR_RECEIVE_PORT = 11
+        ERROR_RECEIVE_PORT = 11,
+        ERROR_SLAVE_WANNA_SYNC = 12,
     };
 
     char * text_from_result_code(result_code code) {
@@ -48,6 +49,8 @@ public:
                 return (char *) "Falhar ao enviar mensagem";
             case ERROR_RECEIVE_PORT:
                 return (char *) "Mensagem recebida na porta errada";
+            case ERROR_SLAVE_WANNA_SYNC:
+                return (char *) "Escravo não pode enviar mensagem de sincronização de tempo";
             default:
                 return (char *) "Código de resultado desconhecido";
         }
@@ -81,6 +84,10 @@ public:
     }
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size, char msg_type) {
+        if (is_slave() && is_sync_type_msg(msg_type)) {
+            return ERROR_SLAVE_WANNA_SYNC;
+        }
+
         Semaphore sem(0);
 
         int id = getCurrentSenderId() ++;
