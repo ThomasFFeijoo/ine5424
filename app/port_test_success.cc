@@ -21,13 +21,14 @@ int main()
 
     if(self[5] % 2) { // sender
         Delay (5000000);
+        sp->master(true);
         cout << "  Sending: " << text;
 
         Simple_Protocol::Address other = self;
         other[5]--;
         cout << "  To: " << other << "\n";
 
-        char * result = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU));
+        char * result = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::SYNC_TEMP_MSG));
         cout << "  " << result << "\n";
     } else { // receiver
         char * result = sp->text_from_result_code(sp->receive(99, data, Traits<Simple_Protocol>::MTU));
