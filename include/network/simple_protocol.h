@@ -170,6 +170,10 @@ public:
         _master = master;
     }
 
+    void resetElapsed() {
+        Alarm::elapsed() = 12345;
+    }
+
 private:
 
     Ordered_List<Package_Semaphore, int> _semaphores;
