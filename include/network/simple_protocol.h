@@ -111,8 +111,8 @@ public:
         // drop message if port 2 (only to test this scenario)
         if (receive_package->header().port() != 2) {
             if (port == receive_package->header().port()) {
-                // we only make a special handling when is to sync time
-                if (receive_package->header().type() == SYNC_TEMP_MSG) {
+                // we only make a special handling when is to sync time and the sp is slave
+                if (is_slave() && receive_package->header().type() == SYNC_TEMP_MSG) {
                     sync_time(receive_package->header().timestamp());
                 } else {
                     memcpy(data, receive_package->data<char>(), size);
@@ -178,6 +178,10 @@ private:
         // Propagation_Delay PD = ((T2 - T1) + (T4-T3))/2   acredito que de pra manter apenas (T2 - T1)/2
         // OFFSET(diferença escravo pro mestre) = (T2 - T1) - PD
         // new clock = old_clock - offset
+    }
+
+    bool is_slave() {
+        return !_master;
     }
 
 public:
