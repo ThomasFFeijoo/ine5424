@@ -29,6 +29,7 @@ int main()
         Simple_Protocol::Address other = self;
         other[5]--;
         cout << "  To: " << other << "\n";
+        sp->resetElapsed();
         cout << "  Time before send 1 : " << sp->get_time() << "\n";
         char * result_sync = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::SYNC_TEMP_MSG));
         Delay(2 * second);
@@ -36,7 +37,7 @@ int main()
         char * result_follow = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::FOLLOW_UP_SYNC_TEMP_MSG));
         cout << "  Time after sends: " << sp->get_time() << "\n";
     } else { // receiver
-        sp->resetElapsed();
+        
         cout << "  Time before receive 1 : " << sp->get_time() << "\n";
         char * result = sp->text_from_result_code(sp->receive(99, data, Traits<Simple_Protocol>::MTU));
         

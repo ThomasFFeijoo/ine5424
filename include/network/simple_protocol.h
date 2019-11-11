@@ -186,14 +186,24 @@ private:
 private:
 
     void sync_time(char msg_type, int timestamp) {
+        
+
         if (msg_type == SYNC_TEMP_MSG) {
-            _received_timestamp = timestamp;
-            _my_timestamp = Alarm::elapsed();
+            _received_timestamp = timestamp; // T1
+            _my_timestamp = Alarm::elapsed(); // T2
         } else if (msg_type == FOLLOW_UP_SYNC_TEMP_MSG) {
-            int my_timestamp_now = Alarm::elapsed();
-            int pd = ((_received_timestamp - _my_timestamp) + (timestamp - my_timestamp_now)) / 2;
-            int offset = (_received_timestamp - _my_timestamp) - pd;
+            db<Observeds>(WRN) << "TEMPO ANTES DO SYNC: " << Alarm::elapsed() << endl;
+            int my_timestamp_now = Alarm::elapsed(); //T3
+            db<Observeds>(WRN) << "_received_timestamp: " << _received_timestamp << endl;
+            db<Observeds>(WRN) << "_my_timestamp: " << _my_timestamp << endl;
+            db<Observeds>(WRN) << "timestamp: " << timestamp << endl;
+            db<Observeds>(WRN) << "my_timestamp_now: " << my_timestamp_now << endl;
+            int pd = ((_my_timestamp - _received_timestamp) + (timestamp - my_timestamp_now)) / 2; //(T2 - T1) + (T4 - T3)
+            db<Observeds>(WRN) << "pd: " << pd << endl;
+            int offset = (_my_timestamp - _received_timestamp) - pd; //T2 - T1 - PD
+            db<Observeds>(WRN) << "offset: " << offset << endl;
             Alarm::elapsed() = my_timestamp_now - offset;
+            db<Observeds>(WRN) << "TEMPO DEPOIS DO SYNC: " << Alarm::elapsed() << endl;
         }
     }
 
