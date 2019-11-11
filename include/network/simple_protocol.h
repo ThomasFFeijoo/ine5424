@@ -95,7 +95,7 @@ public:
 
         Semaphore sem(0);
 
-        int id = getCurrentSenderId() ++;
+        int id = get_current_sender_id() ++;
         int timestamp = Alarm::elapsed();
         Package *package = new Package(address(), port, timestamp, msg_type, data, id);
 
@@ -159,7 +159,7 @@ public:
         Concurrent_Observer<Observer::Observed_Data, Protocol>::update(prot, buf);
     }
 
-    static int & getCurrentSenderId ()
+    static int & get_current_sender_id ()
     {
        static int current_send_id = 0;
        return current_send_id;
@@ -170,7 +170,7 @@ public:
     }
 
     // to help the tests
-    void resetElapsed() {
+    void reset_elapsed() {
         Alarm::elapsed() = 1000;
     }
 
