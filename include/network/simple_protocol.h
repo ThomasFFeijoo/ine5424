@@ -131,7 +131,6 @@ public:
                 char * ack = (char*) "ack";
                 int timestamp = Alarm::elapsed();
                 Package *ack_package = new Package(address(), port, timestamp, ACK_MSG, ack, receive_package->id());
-                //ack_package->header().ack(true); for some reason, this isn't working
 
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
@@ -170,8 +169,9 @@ public:
         _master = master;
     }
 
+    // to help the tests
     void resetElapsed() {
-        Alarm::elapsed() = 12345;
+        Alarm::elapsed() = 1000;
     }
 
 private:
@@ -180,30 +180,30 @@ private:
     // default is be a slave
     bool _master = false;
 
-    int _received_timestamp;
-    int _my_timestamp;
+    int _t1;
+    int _t2;
 
 private:
 
     void sync_time(char msg_type, int timestamp) {
-        
-
         if (msg_type == SYNC_TEMP_MSG) {
-            _received_timestamp = timestamp; // T1
-            _my_timestamp = Alarm::elapsed(); // T2
+            _t1 = timestamp;
+            _t2 = Alarm::elapsed();
         } else if (msg_type == FOLLOW_UP_SYNC_TEMP_MSG) {
-            db<Observeds>(WRN) << "TEMPO ANTES DO SYNC: " << Alarm::elapsed() << endl;
-            int my_timestamp_now = Alarm::elapsed(); //T3
-            db<Observeds>(WRN) << "_received_timestamp: " << _received_timestamp << endl;
-            db<Observeds>(WRN) << "_my_timestamp: " << _my_timestamp << endl;
-            db<Observeds>(WRN) << "timestamp: " << timestamp << endl;
-            db<Observeds>(WRN) << "my_timestamp_now: " << my_timestamp_now << endl;
-            int pd = ((_my_timestamp - _received_timestamp) + (timestamp - my_timestamp_now)) / 2; //(T2 - T1) + (T4 - T3)
-            db<Observeds>(WRN) << "pd: " << pd << endl;
-            int offset = (_my_timestamp - _received_timestamp) - pd; //T2 - T1 - PD
-            db<Observeds>(WRN) << "offset: " << offset << endl;
-            Alarm::elapsed() = my_timestamp_now - offset;
-            db<Observeds>(WRN) << "TEMPO DEPOIS DO SYNC: " << Alarm::elapsed() << endl;
+            // timestamp here is t4
+            int t3 = Alarm::elapsed();
+            int pd = ((_t2 - _t1) + (timestamp - t3)) / 2;
+            int offset = (_t2 - _t1) - pd;
+            Alarm::elapsed() = t3 - offset;
+
+            // its log time
+            db<Observeds>(WRN) << "  _t1 " << _t1 << endl;
+            db<Observeds>(WRN) << "  _t2 " << _t2 << endl;
+            db<Observeds>(WRN) << "  timestamp " << timestamp << endl;
+            db<Observeds>(WRN) << "  t3 " << t3 << endl;
+            db<Observeds>(WRN) << "  pd " << pd << endl;
+            db<Observeds>(WRN) << "  offset " << offset << endl;
+            db<Observeds>(WRN) << "  result " << t3 - offset << endl;
         }
     }
 
