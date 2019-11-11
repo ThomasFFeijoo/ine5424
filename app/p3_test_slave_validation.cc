@@ -23,7 +23,7 @@ int main()
         other[5]--;
 
         char * result_sync = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::SYNC_TEMP_MSG));
-        cout << "  Result code from result_sync: " << result_sync << "\n";
+        cout << "  Result code from sync send: " << result_sync << "\n";
 
         char * result_follow = sp->text_from_result_code(sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::FOLLOW_UP_SYNC_TEMP_MSG));
         cout << "  Result code from follow send: " << result_follow << "\n";
