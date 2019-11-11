@@ -104,7 +104,7 @@ public:
         _semaphores.insert(e);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !ps->_ack; i++) {
-            db<Observeds>(WRN) << "Tentativa de envio numero: " << i + 1 << endl;
+            db<Observeds>(INF) << "Tentativa de envio numero: " << i + 1 << endl;
             _nic->send(dst, Ethernet::PROTO_SP, package, size);
 
             Semaphore_Handler handler(&sem);
@@ -197,13 +197,13 @@ private:
             Alarm::elapsed() = t3 - offset;
 
             // its log time
-            db<Observeds>(WRN) << "  _t1 " << _t1 << endl;
-            db<Observeds>(WRN) << "  _t2 " << _t2 << endl;
-            db<Observeds>(WRN) << "  timestamp " << timestamp << endl;
-            db<Observeds>(WRN) << "  t3 " << t3 << endl;
-            db<Observeds>(WRN) << "  pd " << pd << endl;
-            db<Observeds>(WRN) << "  offset " << offset << endl;
-            db<Observeds>(WRN) << "  result " << t3 - offset << endl;
+            db<Observeds>(INF) << "  _t1 " << _t1 << endl;
+            db<Observeds>(INF) << "  _t2 " << _t2 << endl;
+            db<Observeds>(INF) << "  timestamp " << timestamp << endl;
+            db<Observeds>(INF) << "  t3 " << t3 << endl;
+            db<Observeds>(INF) << "  pd " << pd << endl;
+            db<Observeds>(INF) << "  offset " << offset << endl;
+            db<Observeds>(INF) << "  result " << t3 - offset << endl;
         }
     }
 

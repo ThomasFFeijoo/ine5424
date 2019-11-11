@@ -126,7 +126,7 @@ void Alarm::handler(const IC::Interrupt_Id & i)
     unlock();
 
     if(alarm) {
-        db<Alarm>(WRN) << "Alarm::handler(this=" << alarm << ",e=" << _elapsed << ",h=" << reinterpret_cast<void*>(alarm->handler) << ")" << endl;
+        db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ",e=" << _elapsed << ",h=" << reinterpret_cast<void*>(alarm->handler) << ")" << endl;
         (*alarm->_handler)();
     }
 }
