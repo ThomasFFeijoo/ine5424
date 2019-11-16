@@ -149,8 +149,8 @@ public:
             if(lps) {
                 db<Observeds>(INF) << "ack no update do sender" << endl;
                 Package_Semaphore * ps = lps->object();
-                ps->_sem->v();
                 ps->_ack = true;
+                ps->_sem->v();
                 _semaphores.remove_rank(package->id());
             }
             _nic->free(buf);
