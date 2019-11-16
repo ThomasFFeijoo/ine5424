@@ -2,7 +2,7 @@
 
 #include <machine/nic.h>
 #include <time.h>
-#include <network/simple_protocol.h>
+#include <network/simple_protocol/simple_protocol.h>
 
 using namespace EPOS;
 
