@@ -231,6 +231,8 @@ template<> struct Traits<TSTP>: public Traits<Network>
 
 template<> struct Traits<Simple_Protocol>: public Traits<Network>
 {
+    static const bool enabled = NETWORKS::Count<Simple_Protocol>::Result;
+
     static const unsigned int SP_TIMEOUT  = 12; // seconds, need be * by 10^6 to use in Alarm
     static const unsigned int SP_RETRIES  = 4;
     static const unsigned int MTU  = 1500;
