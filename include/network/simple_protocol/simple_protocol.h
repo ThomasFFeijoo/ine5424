@@ -83,21 +83,17 @@ public:
         return Alarm::elapsed();
     }
 
-    // only for backward compatibility
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
-        return send(dst, port, data, size, NORMAL_MSG);
-    }
-
-    result_code send(const Address & dst, unsigned int port, void * data, unsigned int size, char msg_type) {
-        if (is_slave() && is_sync_type_msg(msg_type)) {
-            return ERROR_SLAVE_WANNA_SYNC;
-        }
+        // TODO: fix this
+        // if (is_slave() && is_sync_type_msg(msg_type)) {
+            // return ERROR_SLAVE_WANNA_SYNC;
+        // }
 
         Semaphore sem(0);
 
         int id = get_current_sender_id() ++;
         int timestamp = Alarm::elapsed();
-        Package *package = new Package(address(), port, timestamp, msg_type, data, id);
+        Package *package = new Package(address(), port, timestamp, data, id);
 
         Package_Semaphore * ps = new Package_Semaphore(id, false, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
@@ -122,15 +118,17 @@ public:
         if (receive_package->header().port() != 2) {
             if (port == receive_package->header().port()) {
                 // we only make a special handling when is to sync time and the sp is slave
-                if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
-                    sync_time(receive_package->header().type(), receive_package->header().timestamp());
-                } else {
+                // XXX: fix this
+                // if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
+                    sync_time(receive_package->header().timestamp());
+                // } else {
                     memcpy(data, receive_package->data<char>(), size);
-                }
+                // }
 
                 char * ack = (char*) "ack";
                 int timestamp = Alarm::elapsed();
-                Package *ack_package = new Package(address(), port, timestamp, ACK_MSG, ack, receive_package->id());
+                Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id());
+                ack_package->ack(true);
 
                 _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
                 code = SUCCESS_ACK;
@@ -144,7 +142,7 @@ public:
 
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
-        if (package->header().type() == ACK_MSG) {
+        if (package->ack()) {
             List_Package_Semaphore * lps = _semaphores.search_rank(package->id());
             if(lps) {
                 db<Observeds>(INF) << "ack no update do sender" << endl;
@@ -165,6 +163,7 @@ public:
        return current_send_id;
     }
 
+    // TODO: fix this
     void master(bool master) {
         _master = master;
     }
@@ -180,21 +179,25 @@ private:
     // default is be a slave
     bool _master = false;
 
-    int _t1;
-    int _t2;
+    int _t1 = -1;
+    int _t2 = -1;
 
 private:
 
-    void sync_time(char msg_type, int timestamp) {
-        if (msg_type == SYNC_TEMP_MSG) {
+    void sync_time(int timestamp) {
+        if (_t1 < 0 && _t2 < 0) {
             _t1 = timestamp;
             _t2 = Alarm::elapsed();
-        } else if (msg_type == FOLLOW_UP_SYNC_TEMP_MSG) {
+        } else {
             // timestamp here is t4
             int t3 = Alarm::elapsed();
             int pd = ((_t2 - _t1) + (timestamp - t3)) / 2;
             int offset = (_t2 - _t1) - pd;
             Alarm::elapsed() = t3 - offset;
+
+            // its erase time
+            _t1 = -1;
+            _t2 = -1;
 
             // its log time
             db<Observeds>(INF) << "  _t1 " << _t1 << endl;
@@ -224,15 +227,17 @@ public:
         Address _from;
         unsigned int _port;
         int _timestamp;
-        // define the type of the package
-        char _type = NORMAL_MSG;
+        // TODO: populate this values
+        double _x;
+        double _y;
+        double _z;
 
     public:
 
         Header() {}
 
-        Header(Address from, unsigned int port, int timestamp, char type):
-            _from(from), _port(port), _timestamp(timestamp), _type(type) {}
+        Header(Address from, unsigned int port, int timestamp):
+            _from(from), _port(port), _timestamp(timestamp) {}
 
         Address from() {
             return _from;
@@ -246,14 +251,6 @@ public:
             return _timestamp;
         }
 
-        char type() {
-            return _type;
-        }
-
-        void type(char type) {
-            _type = type;
-        }
-
     };
 
 public:
@@ -265,12 +262,14 @@ public:
         Header _header;
         void * _data;
         int _id;
+        // define if the package is a ack
+        bool _ack = false;
 
     public:
 
-        Package(Address from, unsigned int port, int timestamp, char type, void * data, int id):
+        Package(Address from, unsigned int port, int timestamp, void * data, int id):
             _data(data), _id(id) {
-                _header = Header(from, port, timestamp, type);
+                _header = Header(from, port, timestamp);
             }
 
         Header header() {
@@ -284,6 +283,14 @@ public:
 
         int id() {
             return _id;
+        }
+
+        bool ack() {
+            return _ack;
+        }
+
+        void ack(bool ack) {
+            _ack = ack;
         }
 
     };
