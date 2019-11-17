@@ -36,7 +36,6 @@ public:
         SUCCESS_ACK        = 2,
         ERROR_SEND         = 10,
         ERROR_RECEIVE_PORT = 11,
-        ERROR_SLAVE_WANNA_SYNC = 12,
     };
 
     char * text_from_result_code(result_code code) {
@@ -49,8 +48,6 @@ public:
                 return (char *) "Falhar ao enviar mensagem";
             case ERROR_RECEIVE_PORT:
                 return (char *) "Mensagem recebida na porta errada";
-            case ERROR_SLAVE_WANNA_SYNC:
-                return (char *) "Escravo não pode enviar mensagem de sincronização de tempo";
             default:
                 return (char *) "Código de resultado desconhecido";
         }
@@ -84,11 +81,6 @@ public:
     }
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
-        // TODO: fix this
-        // if (is_slave() && is_sync_type_msg(msg_type)) {
-            // return ERROR_SLAVE_WANNA_SYNC;
-        // }
-
         Semaphore sem(0);
 
         int id = get_current_sender_id() ++;
@@ -115,13 +107,11 @@ public:
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
         if (port == receive_package->header().port()) {
-            // we only make a special handling when is to sync time and the sp is slave
-            // XXX: fix this
-            // if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
+            if (_allow_sync) {
                 sync_time(receive_package->header().timestamp());
-            // } else {
-                memcpy(data, receive_package->data<char>(), size);
-            // }
+            }
+
+            memcpy(data, receive_package->data<char>(), size);
 
             char * ack = (char*) "ack";
             int timestamp = Alarm::elapsed();
@@ -160,21 +150,19 @@ public:
        return current_send_id;
     }
 
-    // TODO: fix this
-    void master(bool master) {
-        _master = master;
-    }
-
     // to help the tests
     void reset_elapsed() {
         Alarm::elapsed() = 1000;
     }
 
+    void allow_sync(bool allow_sync) {
+        _allow_sync = allow_sync;
+    }
+
 private:
 
     Ordered_List<Package_Semaphore, int> _semaphores;
-    // default is be a slave
-    bool _master = false;
+    bool _allow_sync = true;
 
     int _t1 = -1;
     int _t2 = -1;
@@ -205,14 +193,6 @@ private:
             db<Observeds>(INF) << "  offset " << offset << endl;
             db<Observeds>(INF) << "  result " << t3 - offset << endl;
         }
-    }
-
-    bool is_slave() {
-        return !_master;
-    }
-
-    bool is_sync_type_msg(char msg_type) {
-        return msg_type == SYNC_TEMP_MSG || msg_type == FOLLOW_UP_SYNC_TEMP_MSG;
     }
 
 public:
