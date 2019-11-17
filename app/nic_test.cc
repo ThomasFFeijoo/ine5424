@@ -13,6 +13,7 @@ int main()
     cout << "NIC Test" << endl;
 
     Simple_Protocol * sp = new Simple_Protocol();
+    sp->allow_sync(false);
 
     Simple_Protocol::Address self = sp->address();
 
