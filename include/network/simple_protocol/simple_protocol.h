@@ -89,7 +89,7 @@ public:
 
         Package_Semaphore * ps = new Package_Semaphore(id, false, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
-        _semaphores.insert(e);
+        _controller_structs.insert(e);
 
         for (unsigned int i = 0; (i < Traits<Simple_Protocol>::SP_RETRIES) && !ps->_ack; i++) {
             db<Observeds>(INF) << "Tentativa de envio numero: " << i + 1 << endl;
@@ -130,13 +130,13 @@ public:
     void update(Observed *obs, const Ethernet::Protocol & prot, Buffer * buf) {
         Package *package = reinterpret_cast<Package*>(buf->frame()->data<char>());
         if (package->ack()) {
-            List_Package_Semaphore * lps = _semaphores.search_rank(package->id());
+            List_Package_Semaphore * lps = _controller_structs.search_rank(package->id());
             if(lps) {
                 db<Observeds>(INF) << "ack no update do sender" << endl;
                 Package_Semaphore * ps = lps->object();
                 ps->_ack = true;
                 ps->_sem->v();
-                _semaphores.remove_rank(package->id());
+                _controller_structs.remove_rank(package->id());
             }
             _nic->free(buf);
         }
@@ -161,7 +161,7 @@ public:
 
 private:
 
-    Ordered_List<Package_Semaphore, int> _semaphores;
+    Ordered_List<Package_Semaphore, int> _controller_structs;
     bool _allow_sync = true;
 
     int _t1 = -1;
