@@ -114,27 +114,24 @@ public:
         result_code code;
         Buffer * buff = updated();
         Package *receive_package = reinterpret_cast<Package*>(buff->frame()->data<char>());
-        // drop message if port 2 (only to test this scenario)
-        if (receive_package->header().port() != 2) {
-            if (port == receive_package->header().port()) {
-                // we only make a special handling when is to sync time and the sp is slave
-                // XXX: fix this
-                // if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
-                    sync_time(receive_package->header().timestamp());
-                // } else {
-                    memcpy(data, receive_package->data<char>(), size);
-                // }
+        if (port == receive_package->header().port()) {
+            // we only make a special handling when is to sync time and the sp is slave
+            // XXX: fix this
+            // if (is_slave() && is_sync_type_msg(receive_package->header().type())) {
+                sync_time(receive_package->header().timestamp());
+            // } else {
+                memcpy(data, receive_package->data<char>(), size);
+            // }
 
-                char * ack = (char*) "ack";
-                int timestamp = Alarm::elapsed();
-                Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id());
-                ack_package->ack(true);
+            char * ack = (char*) "ack";
+            int timestamp = Alarm::elapsed();
+            Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id());
+            ack_package->ack(true);
 
-                _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
-                code = SUCCESS_ACK;
-            } else {
-                code = ERROR_RECEIVE_PORT;
-            }
+            _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
+            code = SUCCESS_ACK;
+        } else {
+            code = ERROR_RECEIVE_PORT;
         }
         _nic->free(buff);
         return code;
