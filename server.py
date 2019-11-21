@@ -6,7 +6,7 @@ PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 SEND_DATA_TO_CLIENT = True
 
 def send_data_to_client(conn):
-    conn.sendall('B'.encode())
+    conn.sendall('100,0,0#'.encode())
 
 
 def parse(conn):
