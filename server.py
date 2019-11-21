@@ -5,9 +5,10 @@ PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 SEND_DATA_TO_CLIENT = True
 
-def send_data_to_client(conn):
-    conn.sendall('$GPGGA,183730,3907.356,N,12102.482,W,1,05,1.6,646.4,M,-24.1,M,,*75'.encode())
 
+def send_data_to_client(conn):
+    # TODO: gerar valores aleatórios para as mensagens NMEAs (4 âncoras que já possuem posição definida)
+    conn.sendall('$GPGGA,183730,3907.356,N,12102.482,W,1,05,1.6,646.4,M,-24.1,M,,*75'.encode())
 
 def parse(conn):
     while True:

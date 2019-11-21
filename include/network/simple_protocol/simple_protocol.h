@@ -82,6 +82,9 @@ public:
     }
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
+        // TODO: talvez chamar esquema da uart aqui
+        // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
+
         Semaphore sem(0);
 
         int id = get_current_sender_id() ++;
@@ -110,6 +113,7 @@ public:
         if (port == receive_package->header().port()) {
             if (_allow_sync) {
                 sync_time(receive_package->header().timestamp());
+                sync_location();
             }
 
             memcpy(data, receive_package->data<char>(), size);
@@ -160,6 +164,7 @@ public:
         _allow_sync = allow_sync;
     }
 
+    // TODO: verificar problema de 4 qemus vs qemu
     void start_uart() {
         UART uart(1, 115200, 8, 0, 1);
         uart.loopback(false);
@@ -224,6 +229,13 @@ private:
             db<Observeds>(INF) << "  offset " << offset << endl;
             db<Observeds>(INF) << "  result " << t3 - offset << endl;
         }
+    }
+
+    void sync_location() {
+        // TODO: verificar necessidade de add argumento
+        // TODO: realizar trilateração
+        // TODO: gerar valores aleatórios dentro do range permitido para distância
+        // TODO: verificar se a distância deve ser uma variável global
     }
 
 public:
