@@ -168,8 +168,11 @@ public:
         bool is_checksum = false;
         bool get_data = true;
         int checksum_length = 2;
+        int i = 0;
         while (get_data) {
             c = uart.get();
+            nmea_message[i] = c;
+            i++;
 
             // things to control while flow
             if (is_checksum) {
@@ -182,7 +185,7 @@ public:
             // it's log time
             db<Observeds>(WRN) << "uart.get(" << c << ")" << endl;
         }
-        // db<Observeds>(WRN) << "received: " << result  << endl;
+        db<Observeds>(WRN) << "received: " << nmea_message  << endl;
     }
 
 private:
@@ -192,6 +195,8 @@ private:
 
     int _t1 = -1;
     int _t2 = -1;
+
+    char nmea_message[82]; // 82 is the max length of nmea message by wikipedia
 
 private:
 
