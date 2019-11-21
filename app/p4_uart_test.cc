@@ -18,10 +18,15 @@ int main() {
 
     sp = new Simple_Protocol();
     Simple_Protocol::Address self = sp->address();
+    char * text = (char*) "my text to say hello\n";
 
     if(self[5] % 2) { // sender
         Delay(5000000);
         new Thread(&uart_thread);
+
+        Simple_Protocol::Address other = self;
+        other[5]--;
+        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
     } else { // receiver
     }
 }
