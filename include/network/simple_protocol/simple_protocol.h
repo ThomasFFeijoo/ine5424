@@ -82,8 +82,11 @@ public:
     }
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
-        // TODO: talvez chamar esquema da uart aqui
-        // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
+        if (_allow_sync) {
+            // TODO: talvez chamar esquema da uart aqui
+            split_nmea_message();
+            // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
+        }
 
         Semaphore sem(0);
 
@@ -201,9 +204,79 @@ private:
     int _t1 = -1;
     int _t2 = -1;
 
-    char nmea_message[82]; // 82 is the max length of nmea message by wikipedia
+    int static const MAX_LENGTH = 82; // 82 is the max length of nmea message by wikipedia
+
+    char nmea_message[MAX_LENGTH];
+
+    struct Main_Data_NMEA {
+        // TODO: make conversions to use real types
+        // int _timestamp;
+        // double _latitude;
+        // char _latitude_orientation;
+        // double _longitude;
+        // double _longitude_orientation;
+        // double _altitude;
+
+        Main_Data_NMEA() {}
+
+        void handle_value(int id, char value[]) {
+            switch (id) {
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                // TODO: conversion thing
+                // _latitude_orientation = value[0];
+                break;
+            case 4:
+                break;
+            case 5:
+                // TODO: conversion thing
+                // _longitude_orientation = value[0];
+                break;
+            case 9:
+                // TODO: conversion thing
+                // _altitude = atof(value);
+                break;
+            default:
+                break;
+            }
+        }
+    };
+
+    Main_Data_NMEA _main_data_nmea;
 
 private:
+
+    void split_nmea_message() {
+        Main_Data_NMEA main_data_nmea;
+        int delimiter_number = 0;
+        for (int i = 0; i <= MAX_LENGTH; i++) {
+            if (nmea_message[i] == ',') {
+                delimiter_number++;
+            }
+
+            if (delimiter_number == 1 || // timestamp
+                delimiter_number == 2 || // latitude
+                delimiter_number == 3 || // latitude orientation
+                delimiter_number == 4 || // longitude
+                delimiter_number == 5 || // longitude orientation
+                delimiter_number == 9    // altitude
+               ) {
+                   int j = i + 1;
+                   char value[12];
+                   int k = 0;
+                   while (nmea_message[j] != ',') {
+                       value[k] = nmea_message[j];
+                       j++;
+                       k++;
+                   }
+                   main_data_nmea.handle_value(delimiter_number, value);
+            }
+        }
+        _main_data_nmea = main_data_nmea;
+    }
 
     void sync_time(int timestamp) {
         if (_t1 < 0 && _t2 < 0) {
