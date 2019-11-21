@@ -7,16 +7,21 @@
 using namespace EPOS;
 
 OStream cout;
-
 Simple_Protocol * sp;
 
-int uart_thread()
-{
-    sp->start_uart();    
+int uart_thread() {
+    sp->start_uart();
 }
 
-int main()
-{
+int main() {
+    cout << "Test uart" << endl;
+
     sp = new Simple_Protocol();
-    new Thread(&uart_thread);
+    Simple_Protocol::Address self = sp->address();
+
+    if(self[5] % 2) { // sender
+        Delay(5000000);
+        new Thread(&uart_thread);
+    } else { // receiver
+    }
 }
