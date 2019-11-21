@@ -162,19 +162,27 @@ public:
 
     void start_uart() {
         UART uart(1, 115200, 8, 0, 1);
-
-        db<Observeds>(WRN) << "Loopback transmission test (conf = 115200 8N1):";
         uart.loopback(false);
 
-            char c;
-            char * result;
-            while (c != '#') { // isso é só um teste, acho que ainda nao esta funcionando
-                c = uart.get();// isso pega caracter por caracter, então precisamos adicionar um caracter no final para sabermos quando terminar de ler a mensagem
-                db<Observeds>(WRN) << "uartget (" << c << ")" << endl;
+        char c;
+        bool is_checksum = false;
+        bool get_data = true;
+        int checksum_length = 2;
+        while (get_data) {
+            c = uart.get();
+
+            // things to control while flow
+            if (is_checksum) {
+                checksum_length -= 1;
+                get_data = checksum_length != 0;
+            } else {
+                is_checksum = c == '*';
             }
-                 
-            db<Observeds>(WRN) << "received (" << result << ")" << endl;
-        
+
+            // it's log time
+            db<Observeds>(WRN) << "uart.get(" << c << ")" << endl;
+        }
+        // db<Observeds>(WRN) << "received: " << result  << endl;
     }
 
 private:
