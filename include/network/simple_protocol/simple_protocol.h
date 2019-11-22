@@ -82,6 +82,7 @@ public:
     }
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
+        start_uart();
         if (_allow_sync) {
             // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();

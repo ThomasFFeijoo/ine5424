@@ -11,12 +11,11 @@ def send_data_to_client(conn):
     conn.sendall('$GPGGA,183730,3907.356,N,12102.482,W,1,05,1.6,646.4,M,-24.1,M,,*75'.encode())
 
 def parse(conn):
-    while True:
-        #data = conn.recv(1024)
-        #print("Message received: ", data.decode())
+    #data = conn.recv(1024)
+    #print("Message received: ", data.decode())
 
-        if SEND_DATA_TO_CLIENT:
-            send_data_to_client(conn)
+    if SEND_DATA_TO_CLIENT:
+        send_data_to_client(conn)
 
 
 
