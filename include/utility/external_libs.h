@@ -12,6 +12,38 @@ class Helper {
 public:
     Helper() {}
 
+    // src: https://stackoverflow.com/a/2284929
+    double sin(double x){
+        int i = 1;
+        double cur = x;
+        double acc = 1;
+        double fact= 1;
+        double pow = x;
+        while (fabs(acc) > .00000001 &&   i < 100){
+            fact *= ((2*i)*(2*i+1));
+            pow *= -1 * x*x;
+            acc =  pow / fact;
+            cur += acc;
+            i++;
+        }
+        return cur;
+    }
+
+    // src: https://stackoverflow.com/a/2284969
+    double cos(double x) {
+        double t, s ;
+        int p;
+        p = 0;
+        s = 1.0;
+        t = 1.0;
+        while(fabs(t/s) > .00000001) {
+            p++;
+            t = (-t * x * x) / ((2 * p - 1) * (2 * p));
+            s += t;
+        }
+        return s;
+    }
+
     // src: http://beedub.com/Sprite093/src/lib/c/stdlib/atof.c
     /*
     *----------------------------------------------------------------------
@@ -235,6 +267,7 @@ private:
 
     bool isspace(unsigned char c);
     bool isdigit(unsigned char c);
+    double fabs(double x);
 
 };
 

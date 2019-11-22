@@ -88,9 +88,6 @@ public:
             // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();
             // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
-            // TODO: vai precisar add sin no external_libs: https://stackoverflow.com/a/2284929
-            // TODO: vai precisar add cos no external_libs: https://stackoverflow.com/a/2284969
-            // TODO: vai precisar da função fabs: http://www.beedub.com/Sprite093/src/lib/m/fabs.c
         }
 
         Semaphore sem(0);

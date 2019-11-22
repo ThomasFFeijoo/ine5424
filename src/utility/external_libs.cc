@@ -25,4 +25,27 @@ bool Helper::isdigit(unsigned char c) {
     return false;
 }
 
+// src http://www.beedub.com/Sprite093/src/lib/m/fabs.c
+/*
+ *----------------------------------------------------------------------
+ *
+ * fabs --
+ *
+ *	Return the absolute value of a floating-point number
+ *
+ * Results:
+ *	Absolute value of x.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+double Helper::fabs(double x) {
+    if (x < 0) {
+      return -x;
+    }
+    return x;
+}
+
 __END_UTIL
