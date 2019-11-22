@@ -6,6 +6,7 @@
 #include <synchronizer.h>
 #include <time.h>
 #include <machine/uart.h>
+#include <utility/ostream.h>
 
 __BEGIN_SYS
 
@@ -82,8 +83,8 @@ public:
     }
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
-        start_uart();
         if (_allow_sync) {
+            start_uart();
             // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();
             // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
@@ -210,35 +211,35 @@ private:
     char nmea_message[MAX_LENGTH];
 
     struct Main_Data_NMEA {
-        // TODO: make conversions to use real types
-        // int _timestamp;
-        // double _latitude;
-        // char _latitude_orientation;
-        // double _longitude;
-        // double _longitude_orientation;
-        // double _altitude;
+        double _timestamp;
+        double _latitude;
+        char _latitude_orientation;
+        double _longitude;
+        char _longitude_orientation;
+        double _altitude;
 
         Main_Data_NMEA() {}
 
         void handle_value(int id, char value[]) {
+            OStream helper = OStream();
             switch (id) {
             case 1:
+                _timestamp = helper.atof(value);
                 break;
             case 2:
+                _latitude = helper.atof(value);
                 break;
             case 3:
-                // TODO: conversion thing
-                // _latitude_orientation = value[0];
+                _latitude_orientation = value[0];
                 break;
             case 4:
+                _longitude = helper.atof(value);
                 break;
             case 5:
-                // TODO: conversion thing
-                // _longitude_orientation = value[0];
+                _longitude_orientation = value[0];
                 break;
             case 9:
-                // TODO: conversion thing
-                // _altitude = atof(value);
+                _altitude = helper.atof(value);
                 break;
             default:
                 break;
