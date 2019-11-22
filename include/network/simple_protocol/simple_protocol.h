@@ -6,7 +6,7 @@
 #include <synchronizer.h>
 #include <time.h>
 #include <machine/uart.h>
-#include <utility/ostream.h>
+#include <utility/external_libs.h>
 
 __BEGIN_SYS
 
@@ -221,7 +221,7 @@ private:
         Main_Data_NMEA() {}
 
         void handle_value(int id, char value[]) {
-            OStream helper = OStream();
+            Helper helper = Helper();
             switch (id) {
             case 1:
                 _timestamp = helper.atof(value);
@@ -322,7 +322,7 @@ public:
         Address _from;
         unsigned int _port;
         int _timestamp;
-        // TODO: populate this values
+        // TODO: populate this values always (in every message)
         double _x;
         double _y;
         double _z;
