@@ -87,7 +87,7 @@ public:
             start_uart();
             // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();
-            // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
+            convert_nmea_values();
         }
 
         Semaphore sem(0);
@@ -278,6 +278,22 @@ private:
             }
         }
         _main_data_nmea = main_data_nmea;
+    }
+
+    void convert_nmea_values() {
+        // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
+        // TODO: se basear nisso daqui:
+        // if (_split_message.at(3).compare("S") == 0) {
+        //     latitude *= -1.0;
+        // }
+        // if (_split_message.at(5).compare("W") == 0) {
+        //     longitude *= -1.0;
+        // }
+
+        // double n = a / sqrt(1 - e2 * sin(latitude) * sin(latitude));
+        // _x = (n + altitude) * cos(latitude) * cos(longitude);
+        // _y = (n + altitude) * cos(latitude) * sin(longitude);
+        // _z = (n * (1 - e2) + altitude) * sin(latitude);
     }
 
     void sync_time(int timestamp) {
