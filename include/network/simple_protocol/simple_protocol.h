@@ -71,6 +71,7 @@ public:
             _nic(Traits<Ethernet>::DEVICES::Get<0>::Result::get(nic))
     {
         _nic->attach(this, Ethernet::PROTO_SP);
+        _nodo_position = Nodo_Position();
     }
 
     const Address & address() {
@@ -206,6 +207,8 @@ private:
     int _t1 = -1;
     int _t2 = -1;
 
+    double static constexpr a = 6378137.0; // WGS-84 semi-major axis
+    double static constexpr  e2 = 6.6943799901377997e-3; // WGS-84 first eccentricity squared
     int static const MAX_LENGTH = 82; // 82 is the max length of nmea message by wikipedia
 
     char nmea_message[MAX_LENGTH];
@@ -249,6 +252,16 @@ private:
 
     Main_Data_NMEA _main_data_nmea;
 
+    struct Nodo_Position {
+        double _x;
+        double _y;
+        double _z;
+
+        Nodo_Position() {}
+    };
+
+    Nodo_Position _nodo_position;
+
 private:
 
     void split_nmea_message() {
@@ -281,19 +294,19 @@ private:
     }
 
     void convert_nmea_values() {
-        // TODO: realizar conversão de latitude, longitude e altura para x, y e z por aqui ou na uart
-        // TODO: se basear nisso daqui:
-        // if (_split_message.at(3).compare("S") == 0) {
-        //     latitude *= -1.0;
-        // }
-        // if (_split_message.at(5).compare("W") == 0) {
-        //     longitude *= -1.0;
-        // }
+        if (_main_data_nmea._latitude_orientation == 'S') {
+            _main_data_nmea._latitude *= -1.0;
+        }
 
-        // double n = a / sqrt(1 - e2 * sin(latitude) * sin(latitude));
-        // _x = (n + altitude) * cos(latitude) * cos(longitude);
-        // _y = (n + altitude) * cos(latitude) * sin(longitude);
-        // _z = (n * (1 - e2) + altitude) * sin(latitude);
+        if (_main_data_nmea._longitude_orientation == 'W') {
+            _main_data_nmea._longitude *= -1.0;
+        }
+
+        Helper helper = Helper();
+        double n = a / helper.find_sqrt(1 - e2 * helper.sin(_main_data_nmea._latitude) * helper.sin(_main_data_nmea._latitude));
+        _nodo_position._x = (n + _main_data_nmea._altitude) * helper.cos(_main_data_nmea._latitude) * helper.cos(_main_data_nmea._longitude);
+        _nodo_position._y = (n + _main_data_nmea._altitude) * helper.cos(_main_data_nmea._latitude) * helper.sin(_main_data_nmea._longitude);
+        _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * helper.sin(_main_data_nmea._latitude);
     }
 
     void sync_time(int timestamp) {
