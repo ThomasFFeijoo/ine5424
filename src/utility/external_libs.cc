@@ -4,6 +4,25 @@
 
 __BEGIN_UTIL
 
+// src https://www.geeksforgeeks.org/square-root-of-a-number-without-using-sqrt-function/
+double Helper::square(double n, double i, double j) {
+	double mid = (i + j) / 2;
+	double mul = mid * mid;
+
+	// If mid itself is the square root,
+	// return mid
+	if ((mul == n) || (fabs(mul - n) < 0.00001))
+		return mid;
+
+	// If mul is less than n, recur second half
+	else if (mul < n)
+		return square(n, mid, j);
+
+	// Else recur first half
+	else
+		return square(n, i, mid);
+}
+
 // src https://searchcode.com/codesearch/view/10260157/
 bool Helper::isspace(unsigned char c) {
     if ( c == ' '

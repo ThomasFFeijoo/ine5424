@@ -12,6 +12,33 @@ class Helper {
 public:
     Helper() {}
 
+    // src: https://www.geeksforgeeks.org/square-root-of-a-number-without-using-sqrt-function/
+    double find_sqrt(double n) {
+        double i = 1;
+
+        // While the square root is not found
+        bool found = false;
+        double res;
+        while (!found) {
+
+            // If n is a perfect square
+            if (i * i == n) {
+                res = i;
+                found = true;
+            }
+            else if (i * i > n) {
+
+                // Square root will lie in the
+                // interval i-1 and i
+                res = square(n, i - 1, i);
+                found = true;
+            }
+            i++;
+        }
+        return res;
+    }
+
+
     // src: https://stackoverflow.com/a/2284929
     double sin(double x){
         int i = 1;
@@ -268,6 +295,7 @@ private:
     bool isspace(unsigned char c);
     bool isdigit(unsigned char c);
     double fabs(double x);
+    double square(double n, double i, double j);
 
 };
 
