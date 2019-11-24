@@ -85,17 +85,24 @@ public:
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         if (_allow_sync) {
+            
             start_uart();
+            db<Observeds>(WRN) << "TERMINA UART" << endl;
             // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();
+            db<Observeds>(WRN) << "TERMINA SPLIT" << endl;
             convert_nmea_values();
+            db<Observeds>(WRN) << "TERMINA CONVERT" << endl;
         }
 
         Semaphore sem(0);
 
         int id = get_current_sender_id() ++;
         int timestamp = Alarm::elapsed();
-        Package *package = new Package(address(), port, timestamp, data, id);
+         db<Observeds>(WRN) << "x: " << _nodo_position._x << endl;
+         db<Observeds>(WRN) << "y: " << _nodo_position._y << endl;
+         db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
+        Package *package = new Package(address(), port, timestamp, data, id, _nodo_position._x, _nodo_position._y, _nodo_position._z);
 
         Package_Semaphore * ps = new Package_Semaphore(id, false, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
@@ -126,7 +133,7 @@ public:
 
             char * ack = (char*) "ack";
             int timestamp = Alarm::elapsed();
-            Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id());
+            Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id(), 0,0,0);
             ack_package->ack(true);
 
             _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
@@ -230,6 +237,7 @@ private:
                 _timestamp = helper.atof(value);
                 break;
             case 2:
+                db<Observeds>(WRN) << "latitude value: " << value << endl;
                 _latitude = helper.atof(value);
                 break;
             case 3:
@@ -287,13 +295,17 @@ private:
                        j++;
                        k++;
                    }
+                   
                    main_data_nmea.handle_value(delimiter_number, value);
+
+                   i = j - 1;
             }
         }
         _main_data_nmea = main_data_nmea;
     }
 
     void convert_nmea_values() {
+
         if (_main_data_nmea._latitude_orientation == 'S') {
             _main_data_nmea._latitude *= -1.0;
         }
@@ -303,10 +315,19 @@ private:
         }
 
         Helper helper = Helper();
-        double n = a / helper.find_sqrt(1 - e2 * helper.sin(_main_data_nmea._latitude) * helper.sin(_main_data_nmea._latitude));
+        db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
+        double sin_lat = helper.sin(_main_data_nmea._latitude);
+        db<Observeds>(WRN) << "sin_lat: " << sin_lat << endl;
+        double sqrt = helper.find_sqrt(1 - e2 * sin_lat * sin_lat);
+        db<Observeds>(WRN) << "sqrt: " << sqrt << endl;
+        double n = a / sqrt;
+        db<Observeds>(WRN) << "n: " << n << endl;
         _nodo_position._x = (n + _main_data_nmea._altitude) * helper.cos(_main_data_nmea._latitude) * helper.cos(_main_data_nmea._longitude);
+        db<Observeds>(WRN) << "x: " << _nodo_position._x << endl;
         _nodo_position._y = (n + _main_data_nmea._altitude) * helper.cos(_main_data_nmea._latitude) * helper.sin(_main_data_nmea._longitude);
+        db<Observeds>(WRN) << "y: " << _nodo_position._y << endl;
         _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * helper.sin(_main_data_nmea._latitude);
+        db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
     }
 
     void sync_time(int timestamp) {
@@ -360,8 +381,8 @@ public:
 
         Header() {}
 
-        Header(Address from, unsigned int port, int timestamp):
-            _from(from), _port(port), _timestamp(timestamp) {}
+        Header(Address from, unsigned int port, int timestamp, double x, double y, double z):
+            _from(from), _port(port), _timestamp(timestamp), _x(x), _y(y), _z(z) {}
 
         Address from() {
             return _from;
@@ -373,6 +394,18 @@ public:
 
         int timestamp() {
             return _timestamp;
+        }
+
+        double coord_x() {
+            return _x;
+        }
+
+        double coord_y() {
+            return _x;
+        }
+
+        double coord_z() {
+            return _x;
         }
 
     };
@@ -391,9 +424,9 @@ public:
 
     public:
 
-        Package(Address from, unsigned int port, int timestamp, void * data, int id):
+        Package(Address from, unsigned int port, int timestamp, void * data, int id, double x, double y, double z):
             _data(data), _id(id) {
-                _header = Header(from, port, timestamp);
+                _header = Header(from, port, timestamp, x, y, z);
             }
 
         Header header() {
