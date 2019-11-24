@@ -7,6 +7,7 @@
 #include <time.h>
 #include <machine/uart.h>
 #include <utility/external_libs.h>
+#include <utility/math.h>
 
 __BEGIN_SYS
 
@@ -85,10 +86,9 @@ public:
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         if (_allow_sync) {
-            
+
             start_uart();
             db<Observeds>(WRN) << "TERMINA UART" << endl;
-            // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();
             db<Observeds>(WRN) << "TERMINA SPLIT" << endl;
             convert_nmea_values();
@@ -126,7 +126,7 @@ public:
         if (port == receive_package->header().port()) {
             if (_allow_sync) {
                 sync_time(receive_package->header().timestamp());
-                sync_location();
+                sync_location(receive_package->header().coord_x(), receive_package->header().coord_y());
             }
 
             memcpy(data, receive_package->data<char>(), size);
@@ -177,7 +177,6 @@ public:
         _allow_sync = allow_sync;
     }
 
-    // TODO: verificar problema de 4 qemus vs qemu
     void start_uart() {
         UART uart(1, 115200, 8, 0, 1);
         uart.loopback(false);
@@ -211,6 +210,7 @@ private:
     Ordered_List<Package_Semaphore, int> _controller_structs;
     bool _allow_sync = true;
 
+    // time sync data
     int _t1 = -1;
     int _t2 = -1;
 
@@ -270,6 +270,11 @@ private:
 
     Nodo_Position _nodo_position;
 
+    // spatial sync data
+    // we don't work with negative position
+    double _received_x = -1;
+    double _received_y = -1;
+
 private:
 
     void split_nmea_message() {
@@ -295,7 +300,7 @@ private:
                        j++;
                        k++;
                    }
-                   
+
                    main_data_nmea.handle_value(delimiter_number, value);
 
                    i = j - 1;
@@ -358,11 +363,28 @@ private:
         }
     }
 
-    void sync_location() {
-        // TODO: verificar necessidade de add argumento
-        // TODO: realizar trilateração
-        // TODO: gerar valores aleatórios dentro do range permitido para distância
-        // TODO: verificar se a distância deve ser uma variável global
+    void sync_location(double x, double y) {
+        if (_received_x < 0 && _received_y < 0) {
+            _received_x = x;
+            _received_y = y;
+        } else {
+            Helper helper = Helper();
+
+            // TODO: gerar valores aleatórios dentro do range permitido para distância
+            double r1 = 0;
+            double r2 = 0;
+
+            // distance between the two known points
+            double x_part = x - _received_x;
+            double y_part = y - _received_y;
+            double u = helper.find_sqrt(pow(x_part, 2) + pow(y_part, 2));
+
+            double r1_2 = pow(r1, 2);
+
+            _nodo_position._x = (r1_2 - pow(r2, 2) + pow(u, 2)) / (2 * u);
+            _nodo_position._y = helper.find_sqrt(r1_2 - pow(_nodo_position._x, 2));
+            _nodo_position._z = 0;
+        }
     }
 
 public:
