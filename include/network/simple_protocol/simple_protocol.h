@@ -8,6 +8,7 @@
 #include <machine/uart.h>
 #include <utility/external_libs.h>
 #include <utility/math.h>
+#include <utility/random.h>
 
 __BEGIN_SYS
 
@@ -370,9 +371,8 @@ private:
         } else {
             Helper helper = Helper();
 
-            // TODO: gerar valores aleatórios dentro do range permitido para distância
-            double r1 = 0;
-            double r2 = 0;
+            double r1 = 1 + Random::random() % 100;
+            double r2 = 1 + Random::random() % 100;
 
             // distance between the two known points
             double x_part = x - _received_x;
@@ -384,6 +384,17 @@ private:
             _nodo_position._x = (r1_2 - pow(r2, 2) + pow(u, 2)) / (2 * u);
             _nodo_position._y = helper.find_sqrt(r1_2 - pow(_nodo_position._x, 2));
             _nodo_position._z = 0;
+
+            // its log time
+            db<Observeds>(INF) << "  _received_x " << _received_x << endl;
+            db<Observeds>(INF) << "  _received_y " << _received_y << endl;
+            db<Observeds>(INF) << "  x " << x << endl;
+            db<Observeds>(INF) << "  y " << y << endl;
+            db<Observeds>(INF) << "  r1 " << r1 << endl;
+            db<Observeds>(INF) << "  r2 " << r2 << endl;
+            db<Observeds>(INF) << "  u " << u << endl;
+            db<Observeds>(INF) << "  _nodo_position._x " << _nodo_position._x << endl;
+            db<Observeds>(INF) << "  _nodo_position._y " << _nodo_position._y << endl;
         }
     }
 
