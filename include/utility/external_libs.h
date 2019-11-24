@@ -56,6 +56,11 @@ public:
         return cur;
     }
 
+    double deg2rand(double deg){
+        double PI = 3.14159265358979323846264338327950288;
+        return deg * PI / 180.0;
+    }
+
     // src: https://stackoverflow.com/a/2284969
     double cos(double x) {
         double t, s ;
