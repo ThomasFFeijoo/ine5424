@@ -316,7 +316,9 @@ private:
 
         Helper helper = Helper();
         db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
-        double sin_lat = helper.sin(_main_data_nmea._latitude);
+        double lat_radiano = helper.deg2rand(_main_data_nmea._latitude);
+        db<Observeds>(WRN) << "lat_radiano: " << lat_radiano << endl;
+        double sin_lat = helper.sin(lat_radiano);
         db<Observeds>(WRN) << "sin_lat: " << sin_lat << endl;
         double sqrt = helper.find_sqrt(1 - e2 * sin_lat * sin_lat);
         db<Observeds>(WRN) << "sqrt: " << sqrt << endl;
