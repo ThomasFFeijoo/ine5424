@@ -7,6 +7,8 @@
 #include <time.h>
 #include <machine/uart.h>
 #include <utility/external_libs.h>
+#include <utility/math.h>
+#include <utility/random.h>
 
 __BEGIN_SYS
 
@@ -85,10 +87,8 @@ public:
 
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         if (_allow_sync) {
-            
             start_uart();
             db<Observeds>(WRN) << "TERMINA UART" << endl;
-            // TODO: talvez chamar esquema da uart aqui
             split_nmea_message();
             db<Observeds>(WRN) << "TERMINA SPLIT" << endl;
             convert_nmea_values();
@@ -99,10 +99,7 @@ public:
 
         int id = get_current_sender_id() ++;
         int timestamp = Alarm::elapsed();
-         db<Observeds>(WRN) << "x: " << _nodo_position._x << endl;
-         db<Observeds>(WRN) << "y: " << _nodo_position._y << endl;
-         db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
-        Package *package = new Package(address(), port, timestamp, data, id, _nodo_position._x, _nodo_position._y, _nodo_position._z);
+        Package *package = new Package(address(), port, timestamp, data, id, _nodo_position.x(), _nodo_position.y(), _nodo_position._z);
 
         Package_Semaphore * ps = new Package_Semaphore(id, false, &sem);
         List_Package_Semaphore * e = new List_Package_Semaphore(ps, id);
@@ -126,14 +123,14 @@ public:
         if (port == receive_package->header().port()) {
             if (_allow_sync) {
                 sync_time(receive_package->header().timestamp());
-                sync_location();
+                sync_location(receive_package->header().coord_x(), receive_package->header().coord_y());
             }
 
             memcpy(data, receive_package->data<char>(), size);
 
             char * ack = (char*) "ack";
             int timestamp = Alarm::elapsed();
-            Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id(), 0,0,0);
+            Package *ack_package = new Package(address(), port, timestamp, ack, receive_package->id(), _nodo_position.x(), _nodo_position.y(), _nodo_position._z);
             ack_package->ack(true);
 
             _nic->send(receive_package->header().from(), Ethernet::PROTO_SP, ack_package, size);
@@ -177,7 +174,6 @@ public:
         _allow_sync = allow_sync;
     }
 
-    // TODO: verificar problema de 4 qemus vs qemu
     void start_uart() {
         UART uart(1, 115200, 8, 0, 1);
         uart.loopback(false);
@@ -211,6 +207,7 @@ private:
     Ordered_List<Package_Semaphore, int> _controller_structs;
     bool _allow_sync = true;
 
+    // time sync data
     int _t1 = -1;
     int _t2 = -1;
 
@@ -262,13 +259,38 @@ private:
 
     struct Nodo_Position {
         double _x;
+        bool random_x = true;
         double _y;
-        double _z;
+        bool random_y = true;
+        double _z; // z don't have random because isn't used
+
+        double x() {
+            return random_x ? 1 + Random::random() % 100 : _x;
+        }
+
+        void x(double x) {
+            random_x = false;
+            _x = x;
+        }
+
+        double y() {
+            return random_y ? 1 + Random::random() % 100 : _y;
+        }
+
+        void y(double y) {
+            random_y = false;
+            _y = y;
+        }
 
         Nodo_Position() {}
     };
 
     Nodo_Position _nodo_position;
+
+    // spatial sync data
+    // we don't work with negative position
+    double _received_x = -1;
+    double _received_y = -1;
 
 private:
 
@@ -314,33 +336,36 @@ private:
         }
 
         Helper helper = Helper();
-        db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
-        db<Observeds>(WRN) << "longitude: " << _main_data_nmea._longitude << endl;
+        
         double lat_radiano = helper.deg2rand(_main_data_nmea._latitude);
         double lon_radiano = helper.deg2rand(_main_data_nmea._longitude);
-        db<Observeds>(WRN) << "lat_radiano: " << lat_radiano << endl;
-        db<Observeds>(WRN) << "lon_radiano: " << lon_radiano << endl;
 
         double sin_lat = helper.sin(lat_radiano);
         double sin_lon = helper.sin(lon_radiano);
         double cos_lat = helper.cos(lat_radiano);
         double cos_lon = helper.cos(lon_radiano);
+
+        double sqrt = helper.find_sqrt(1 - e2 * sin_lat * sin_lat);
+        double n = a / sqrt;
+
+        _nodo_position._x = (n + _main_data_nmea._altitude) * cos_lat * cos_lon;
+        _nodo_position._y = (n + _main_data_nmea._altitude) * cos_lat * sin_lon;
+        _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
+        
+
+        //LOOOOOOG
+        db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
+        db<Observeds>(WRN) << "longitude: " << _main_data_nmea._longitude << endl;
+        db<Observeds>(WRN) << "lat_radiano: " << lat_radiano << endl;
+        db<Observeds>(WRN) << "lon_radiano: " << lon_radiano << endl;
         db<Observeds>(WRN) << "sin_lat: " << sin_lat << endl;
         db<Observeds>(WRN) << "sin_lon: " << sin_lon << endl;
         db<Observeds>(WRN) << "cos_lat: " << cos_lat << endl;
         db<Observeds>(WRN) << "cos_lon: " << cos_lon << endl;
-
-        double sqrt = helper.find_sqrt(1 - e2 * sin_lat * sin_lat);
         db<Observeds>(WRN) << "sqrt: " << sqrt << endl;
-        
-        double n = a / sqrt;
         db<Observeds>(WRN) << "n: " << n << endl;
-        
-        _nodo_position._x = (n + _main_data_nmea._altitude) * cos_lat * cos_lon;
         db<Observeds>(WRN) << "x: " << _nodo_position._x << endl;
-        _nodo_position._y = (n + _main_data_nmea._altitude) * cos_lat * sin_lon;
         db<Observeds>(WRN) << "y: " << _nodo_position._y << endl;
-        _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
         db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
     }
 
@@ -370,11 +395,38 @@ private:
         }
     }
 
-    void sync_location() {
-        // TODO: verificar necessidade de add argumento
-        // TODO: realizar trilateração
-        // TODO: gerar valores aleatórios dentro do range permitido para distância
-        // TODO: verificar se a distância deve ser uma variável global
+    void sync_location(double x, double y) {
+        if (_received_x < 0 && _received_y < 0) {
+            _received_x = x;
+            _received_y = y;
+        } else {
+            Helper helper = Helper();
+
+            double r1 = 1 + Random::random() % 100;
+            double r2 = 1 + Random::random() % 100;
+
+            // distance between the two known points
+            double x_part = x - _received_x;
+            double y_part = y - _received_y;
+            double u = helper.find_sqrt(pow(x_part, 2) + pow(y_part, 2));
+
+            double r1_2 = pow(r1, 2);
+
+            _nodo_position.x((r1_2 - pow(r2, 2) + pow(u, 2)) / (2 * u));
+            _nodo_position.y(helper.find_sqrt(r1_2 - pow(_nodo_position.x(), 2)));
+            _nodo_position._z = 0;
+
+            // its log time
+            db<Observeds>(INF) << "  _received_x " << _received_x << endl;
+            db<Observeds>(INF) << "  _received_y " << _received_y << endl;
+            db<Observeds>(INF) << "  x " << x << endl;
+            db<Observeds>(INF) << "  y " << y << endl;
+            db<Observeds>(INF) << "  r1 " << r1 << endl;
+            db<Observeds>(INF) << "  r2 " << r2 << endl;
+            db<Observeds>(INF) << "  u " << u << endl;
+            db<Observeds>(INF) << "  _nodo_position._x " << _nodo_position.x() << endl;
+            db<Observeds>(INF) << "  _nodo_position._y " << _nodo_position.y() << endl;
+        }
     }
 
 public:
@@ -386,7 +438,6 @@ public:
         Address _from;
         unsigned int _port;
         int _timestamp;
-        // TODO: populate this values always (in every message)
         double _x;
         double _y;
         double _z;
