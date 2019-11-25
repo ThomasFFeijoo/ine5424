@@ -88,11 +88,8 @@ public:
     result_code send(const Address & dst, unsigned int port, void * data, unsigned int size) {
         if (_allow_sync) {
             start_uart();
-            db<Observeds>(WRN) << "TERMINA UART" << endl;
             split_nmea_message();
-            db<Observeds>(WRN) << "TERMINA SPLIT" << endl;
             convert_nmea_values();
-            db<Observeds>(WRN) << "TERMINA CONVERT" << endl;
         }
 
         Semaphore sem(0);
@@ -210,7 +207,6 @@ private:
                 _seconds = helper.atof((char *) value[4]) * 10 + helper.atof((char *) value[5]);
                 break;
             case 2:
-                db<Observeds>(WRN) << "latitude value: " << value << endl;
                 _latitude = helper.atof(value);
                 break;
             case 3:
@@ -354,37 +350,23 @@ private:
 
         _nodo_position.x((n + _main_data_nmea._altitude) * cos_lat * cos_lon);
         _nodo_position.y((n + _main_data_nmea._altitude) * cos_lat * sin_lon);
-        _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
+        //_nodo_position.z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
 
 
         //LOOOOOOG
-        db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
-        db<Observeds>(WRN) << "longitude: " << _main_data_nmea._longitude << endl;
-        db<Observeds>(WRN) << "lat_radiano: " << lat_radiano << endl;
-        db<Observeds>(WRN) << "lon_radiano: " << lon_radiano << endl;
-        db<Observeds>(WRN) << "sin_lat: " << sin_lat << endl;
-        db<Observeds>(WRN) << "sin_lon: " << sin_lon << endl;
-        db<Observeds>(WRN) << "cos_lat: " << cos_lat << endl;
-        db<Observeds>(WRN) << "cos_lon: " << cos_lon << endl;
-        db<Observeds>(WRN) << "sqrt: " << sqrt << endl;
-        db<Observeds>(WRN) << "n: " << n << endl;
-        db<Observeds>(WRN) << "x: " << _nodo_position.x() << endl;
-        db<Observeds>(WRN) << "y: " << _nodo_position.y() << endl;
-        db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
-
-        RTC rtc;
-        RTC::Date now = rtc.date();
-        int days_since_0 = ((now.year() - 1) * 365) + (now.month() * 30) + (now.day() - 1);
-        int days_since_epoch = days_since_0 - Traits<RTC>::EPOCH_DAYS;
-        int seconds_from_epoch_until_yesterday = 86400 * days_since_epoch;
-        int seconds_from_epoch = seconds_from_epoch_until_yesterday + _main_data_nmea._hours * 3600 + _main_data_nmea._minutes * 60 + _main_data_nmea._seconds;
-        Alarm::elapsed() = seconds_from_epoch;
-
-        // more log
-        db<Observeds>(WRN) << "days_since_0: " << days_since_0 << endl;
-        db<Observeds>(WRN) << "days_since_epoch: " << days_since_epoch << endl;
-        db<Observeds>(WRN) << "seconds_from_epoch_until_yesterday: " << seconds_from_epoch_until_yesterday << endl;
-        db<Observeds>(WRN) << "seconds_from_epoch: " << seconds_from_epoch << endl;
+        db<Observeds>(INF) << "latitude: " << _main_data_nmea._latitude << endl;
+        db<Observeds>(INF) << "longitude: " << _main_data_nmea._longitude << endl;
+        db<Observeds>(INF) << "altitude: " << _main_data_nmea._altitude << endl;
+        db<Observeds>(INF) << "lat_radiano: " << lat_radiano << endl;
+        db<Observeds>(INF) << "lon_radiano: " << lon_radiano << endl;
+        db<Observeds>(INF) << "sin_lat: " << sin_lat << endl;
+        db<Observeds>(INF) << "sin_lon: " << sin_lon << endl;
+        db<Observeds>(INF) << "cos_lat: " << cos_lat << endl;
+        db<Observeds>(INF) << "cos_lon: " << cos_lon << endl;
+        db<Observeds>(INF) << "sqrt: " << sqrt << endl;
+        db<Observeds>(INF) << "n: " << n << endl;
+        db<Observeds>(INF) << "x: " << _nodo_position.x() << endl;
+        db<Observeds>(INF) << "y: " << _nodo_position.y() << endl;
     }
 
     void sync_time(int timestamp) {
@@ -426,8 +408,9 @@ private:
             // distance between the two known points
             double x_part = x - _received_x;
             double y_part = y - _received_y;
-            double u = helper.find_sqrt(pow(x_part, 2) + pow(y_part, 2));
-
+            double pow_x = pow(x_part, 2);
+            double pow_y = pow(y_part, 2);
+            double u = helper.find_sqrt( pow_x + pow_y);
             double r1_2 = pow(r1, 2);
 
             _nodo_position.x((r1_2 - pow(r2, 2) + pow(u, 2)) / (2 * u));
@@ -435,15 +418,15 @@ private:
             _nodo_position._z = 0;
 
             // its log time
-            db<Observeds>(INF) << "  _received_x " << _received_x << endl;
-            db<Observeds>(INF) << "  _received_y " << _received_y << endl;
-            db<Observeds>(INF) << "  x " << x << endl;
-            db<Observeds>(INF) << "  y " << y << endl;
-            db<Observeds>(INF) << "  r1 " << r1 << endl;
-            db<Observeds>(INF) << "  r2 " << r2 << endl;
-            db<Observeds>(INF) << "  u " << u << endl;
-            db<Observeds>(INF) << "  _nodo_position._x " << _nodo_position.x() << endl;
-            db<Observeds>(INF) << "  _nodo_position._y " << _nodo_position.y() << endl;
+            db<Observeds>(WRN) << "  _received_x " << _received_x << endl;
+            db<Observeds>(WRN) << "  _received_y " << _received_y << endl;
+            db<Observeds>(WRN) << "  x " << x << endl;
+            db<Observeds>(WRN) << "  y " << y << endl;
+            db<Observeds>(WRN) << "  r1 " << r1 << endl;
+            db<Observeds>(WRN) << "  r2 " << r2 << endl;
+            db<Observeds>(WRN) << "  u " << u << endl;
+            db<Observeds>(WRN) << "  _nodo_position._x " << _nodo_position.x() << endl;
+            db<Observeds>(WRN) << "  _nodo_position._y " << _nodo_position.y() << endl;
         }
     }
 

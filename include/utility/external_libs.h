@@ -8,41 +8,26 @@
 __BEGIN_UTIL
 
 class Helper {
-
+OStream cout;
 public:
     Helper() {}
 
-    // src: https://www.geeksforgeeks.org/square-root-of-a-number-without-using-sqrt-function/
-    double find_sqrt(double n) {
-        double i = 1;
-
-        // While the square root is not found
-        bool found = false;
-        double res;
-        while (!found) {
-
-            // If n is a perfect square
-            if (i * i == n) {
-                res = i;
-                found = true;
-            }
-            else if (i * i > n) {
-
-                // Square root will lie in the
-                // interval i-1 and i
-                res = square(n, i - 1, i);
-                found = true;
-            }
-            i++;
-        }
-        return res;
+    double find_sqrt(double x) {
+        if (!x)
+                return 0;
+        double n = 1;
+        for (int i = 0; i < 1000; i++)
+                n = n - (n*n - x)/(2*n);
+        return n;
     }
 
+
+
     double fabs(double number) {
-    double ret = number;
-    *(((int *) &ret) + 1) &= 0x7fffffff;
-    return ret;
-}
+        double ret = number;
+        *(((int *) &ret) + 1) &= 0x7fffffff;
+        return ret;
+    }
 
 
     // src: https://stackoverflow.com/a/2284929
