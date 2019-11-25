@@ -1,6 +1,6 @@
 #include <machine/nic.h>
 #include <time.h>
-#include <network/simple_protocol.h>
+#include <network/simple_protocol/simple_protocol.h>
 
 using namespace EPOS;
 
@@ -19,15 +19,14 @@ int main()
 
     if (self[5] % 2) { // sender
         Delay(5 * second);
-        sp->master(true);
         Simple_Protocol::Address other = self;
         other[5]--;
 
         cout << "  Time before send 1 : " << sp->get_time() << "\n";
-        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::SYNC_TEMP_MSG);
+        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
         Delay(2 * second);
         cout << "  Time before send 2 : " << sp->get_time() << "\n";
-        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU, Simple_Protocol::FOLLOW_UP_SYNC_TEMP_MSG);
+        sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
         cout << "  Time after sends: " << sp->get_time() << "\n";
     } else { // receiver
         sp->reset_elapsed();

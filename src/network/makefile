@@ -2,7 +2,7 @@
 
 include ../../makedefs
 
-SUBDIRS := ipv4 tstp
+SUBDIRS := ipv4 tstp simple_protocol
 OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v _test | grep -v _init))
 INITS := $(subst .cc,.o,$(shell find *.cc | grep _init))
 

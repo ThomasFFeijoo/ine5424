@@ -2,7 +2,7 @@
 
 #include <machine/nic.h>
 #include <time.h>
-#include <network/simple_protocol.h>
+#include <network/simple_protocol/simple_protocol.h>
 
 using namespace EPOS;
 
@@ -13,6 +13,7 @@ int main()
     cout << "NIC Test" << endl;
 
     Simple_Protocol * sp = new Simple_Protocol();
+    sp->allow_sync(false);
 
     Simple_Protocol::Address self = sp->address();
 
