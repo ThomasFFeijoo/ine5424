@@ -368,6 +368,20 @@ private:
         db<Observeds>(INF) << "n: " << n << endl;
         db<Observeds>(INF) << "x: " << _nodo_position.x() << endl;
         db<Observeds>(INF) << "y: " << _nodo_position.y() << endl;
+
+        RTC rtc;
+        RTC::Date now = rtc.date();
+        int days_since_0 = ((now.year() - 1) * 365) + (now.month() * 30) + (now.day() - 1);
+        int days_since_epoch = days_since_0 - Traits<RTC>::EPOCH_DAYS;
+        int seconds_from_epoch_until_yesterday = 86400 * days_since_epoch;
+        int seconds_from_epoch = seconds_from_epoch_until_yesterday + _main_data_nmea._hours * 3600 + _main_data_nmea._minutes * 60 + _main_data_nmea._seconds;
+        Alarm::elapsed() = seconds_from_epoch;
+
+        // more log
+        db<Observeds>(WRN) << "days_since_0: " << days_since_0 << endl;
+        db<Observeds>(WRN) << "days_since_epoch: " << days_since_epoch << endl;
+        db<Observeds>(WRN) << "seconds_from_epoch_until_yesterday: " << seconds_from_epoch_until_yesterday << endl;
+        db<Observeds>(WRN) << "seconds_from_epoch: " << seconds_from_epoch << endl;
     }
 
     void sync_time(int timestamp) {
