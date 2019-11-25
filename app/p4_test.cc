@@ -1,4 +1,3 @@
-// EPOS PC UART Mediator Test Program
 #include <machine/nic.h>
 #include <time.h>
 #include <network/simple_protocol/simple_protocol.h>
@@ -15,7 +14,7 @@ Simple_Protocol * sp;
 
 int main() {
     cout << "Test uart" << endl;
-    
+
     sp = new Simple_Protocol();
     Simple_Protocol::Address self = sp->address();
     char * text = (char*) "my text to say hello\n";
