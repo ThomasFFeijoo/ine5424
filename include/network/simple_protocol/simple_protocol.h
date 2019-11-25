@@ -350,6 +350,7 @@ private:
 
         _nodo_position.x((n + _main_data_nmea._altitude) * cos_lat * cos_lon);
         _nodo_position.y((n + _main_data_nmea._altitude) * cos_lat * sin_lon);
+        // not today
         //_nodo_position.z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
 
 
