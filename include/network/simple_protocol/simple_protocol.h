@@ -202,9 +202,9 @@ private:
             Helper helper = Helper();
             switch (id) {
             case 1:
-                _hours = helper.atof((char *) value[0]) * 10 + helper.atof((char *) value[1]);
-                _minutes = helper.atof((char *) value[2]) * 10 + helper.atof((char *) value[3]);
-                _seconds = helper.atof((char *) value[4]) * 10 + helper.atof((char *) value[5]);
+                _hours = (value[0] - '0') * 10 + (value[1] - '0');
+                _minutes = (value[2] - '0') * 10 + (value[3] - '0');
+                _seconds = (value[4] - '0') * 10 + (value[5] - '0');
                 break;
             case 2:
                 _latitude = helper.atof(value);
