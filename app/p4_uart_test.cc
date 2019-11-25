@@ -15,7 +15,7 @@ Simple_Protocol * sp;
 
 int main() {
     cout << "Test uart" << endl;
-
+    
     sp = new Simple_Protocol();
     Simple_Protocol::Address self = sp->address();
     char * text = (char*) "my text to say hello\n";
@@ -30,5 +30,6 @@ int main() {
         sp->send(other, 98, text, Traits<Simple_Protocol>::MTU);
     } else { // receiver
         sp->receive(99, data, Traits<Simple_Protocol>::MTU);
+        sp->receive(98, data, Traits<Simple_Protocol>::MTU);
     }
 }
