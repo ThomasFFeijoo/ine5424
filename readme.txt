@@ -1,8 +1,6 @@
-Para solucionar essa etapa do projeto foi incrementado o arquivo simple_protocol.h que representa o protocolo, além de diversos arquivos testes.
+O teste deve ser executado como aplicação do EPOS (e.g. make APPLICATION=p4_test run).
 
-Os testes devem ser executados um de cada vez e como aplicações do EPOS (e.g. make APPLICATION=p3_test_sync run).
+O daemon deve ser iniciado separadamente da seguinte maneira: python3 server.py ou python server.py. É necessário a utilização de python versão 3.x para um correto funcionamento.
 
-Os seguintes arquivos de testes foram utilizados para validar a solução:
-- p3_test_sync.cc
-- p3_test_sync_with_reset.cc
-- p3_test_slave_validation.cc
+O seguinte arquivo de teste foi utilizado para validar a solução:
+- p4_test.cc
