@@ -174,34 +174,6 @@ public:
         _allow_sync = allow_sync;
     }
 
-    void start_uart() {
-        UART uart(1, 115200, 8, 0, 1);
-        uart.loopback(false);
-
-        char c;
-        bool is_checksum = false;
-        bool get_data = true;
-        int checksum_length = 2;
-        int i = 0;
-        while (get_data) {
-            c = uart.get();
-            nmea_message[i] = c;
-            i++;
-
-            // things to control while flow
-            if (is_checksum) {
-                checksum_length -= 1;
-                get_data = checksum_length != 0;
-            } else {
-                is_checksum = c == '*';
-            }
-
-            // it's log time
-            db<Observeds>(WRN) << "uart.get(" << c << ")" << endl;
-        }
-        db<Observeds>(WRN) << "received: " << nmea_message  << endl;
-    }
-
 private:
 
     Ordered_List<Package_Semaphore, int> _controller_structs;
@@ -293,6 +265,34 @@ private:
     double _received_y = -1;
 
 private:
+
+    void start_uart() {
+        UART uart(1, 115200, 8, 0, 1);
+        uart.loopback(false);
+
+        char c;
+        bool is_checksum = false;
+        bool get_data = true;
+        int checksum_length = 2;
+        int i = 0;
+        while (get_data) {
+            c = uart.get();
+            nmea_message[i] = c;
+            i++;
+
+            // things to control while flow
+            if (is_checksum) {
+                checksum_length -= 1;
+                get_data = checksum_length != 0;
+            } else {
+                is_checksum = c == '*';
+            }
+
+            // it's log time
+            db<Observeds>(WRN) << "uart.get(" << c << ")" << endl;
+        }
+        db<Observeds>(WRN) << "received: " << nmea_message  << endl;
+    }
 
     void split_nmea_message() {
         Main_Data_NMEA main_data_nmea;
