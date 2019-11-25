@@ -373,9 +373,13 @@ private:
         if (_t1 < 0 && _t2 < 0) {
             _t1 = timestamp;
             _t2 = Alarm::elapsed();
+            db<Observeds>(WRN) << "  T1 DO SERVIDOR " << _t1 << endl;
+            db<Observeds>(WRN) << "  T2 RECEIVER " << _t2 << endl;
         } else {
             // timestamp here is t4
             int t3 = Alarm::elapsed();
+            db<Observeds>(WRN) << "  T3 RECEIVER " << t3 << endl;
+            db<Observeds>(WRN) << "  T4 DO SERVIDOR " << timestamp << endl;
             int pd = ((_t2 - _t1) + (timestamp - t3)) / 2;
             int offset = (_t2 - _t1) - pd;
             Alarm::elapsed() = t3 - offset;
@@ -385,13 +389,13 @@ private:
             _t2 = -1;
 
             // its log time
-            db<Observeds>(INF) << "  _t1 " << _t1 << endl;
-            db<Observeds>(INF) << "  _t2 " << _t2 << endl;
-            db<Observeds>(INF) << "  timestamp " << timestamp << endl;
-            db<Observeds>(INF) << "  t3 " << t3 << endl;
-            db<Observeds>(INF) << "  pd " << pd << endl;
-            db<Observeds>(INF) << "  offset " << offset << endl;
-            db<Observeds>(INF) << "  result " << t3 - offset << endl;
+            db<Observeds>(WRN) << "  _t1 " << _t1 << endl;
+            db<Observeds>(WRN) << "  _t2 " << _t2 << endl;
+            db<Observeds>(WRN) << "  timestamp " << timestamp << endl;
+            db<Observeds>(WRN) << "  t3 " << t3 << endl;
+            db<Observeds>(WRN) << "  pd " << pd << endl;
+            db<Observeds>(WRN) << "  offset " << offset << endl;
+            db<Observeds>(WRN) << "  result " << t3 - offset << endl;
         }
     }
 
