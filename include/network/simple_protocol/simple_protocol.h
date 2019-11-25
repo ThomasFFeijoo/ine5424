@@ -420,8 +420,8 @@ private:
         } else {
             Helper helper = Helper();
 
-            double r1 = 1 + Random::random() % 100;
-            double r2 = 1 + Random::random() % 100;
+            double r1 = helper.fabs(1 + Random::random() % 100);
+            double r2 = helper.fabs(1 + Random::random() % 100);
 
             // distance between the two known points
             double x_part = x - _received_x;
