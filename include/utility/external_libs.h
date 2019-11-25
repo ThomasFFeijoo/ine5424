@@ -290,7 +290,6 @@ private:
 
     bool isspace(unsigned char c);
     bool isdigit(unsigned char c);
-    double square(double n, double i, double j);
 
 };
 
