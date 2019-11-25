@@ -336,7 +336,7 @@ private:
         }
 
         Helper helper = Helper();
-        
+
         double lat_radiano = helper.deg2rand(_main_data_nmea._latitude);
         double lon_radiano = helper.deg2rand(_main_data_nmea._longitude);
 
@@ -348,10 +348,10 @@ private:
         double sqrt = helper.find_sqrt(1 - e2 * sin_lat * sin_lat);
         double n = a / sqrt;
 
-        _nodo_position._x = (n + _main_data_nmea._altitude) * cos_lat * cos_lon;
-        _nodo_position._y = (n + _main_data_nmea._altitude) * cos_lat * sin_lon;
+        _nodo_position.x((n + _main_data_nmea._altitude) * cos_lat * cos_lon);
+        _nodo_position.y((n + _main_data_nmea._altitude) * cos_lat * sin_lon);
         _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
-        
+
 
         //LOOOOOOG
         db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
@@ -364,8 +364,8 @@ private:
         db<Observeds>(WRN) << "cos_lon: " << cos_lon << endl;
         db<Observeds>(WRN) << "sqrt: " << sqrt << endl;
         db<Observeds>(WRN) << "n: " << n << endl;
-        db<Observeds>(WRN) << "x: " << _nodo_position._x << endl;
-        db<Observeds>(WRN) << "y: " << _nodo_position._y << endl;
+        db<Observeds>(WRN) << "x: " << _nodo_position.x() << endl;
+        db<Observeds>(WRN) << "y: " << _nodo_position.y() << endl;
         db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
     }
 
