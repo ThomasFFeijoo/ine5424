@@ -38,6 +38,12 @@ public:
         return res;
     }
 
+    double fabs(double number) {
+    double ret = number;
+    *(((int *) &ret) + 1) &= 0x7fffffff;
+    return ret;
+}
+
 
     // src: https://stackoverflow.com/a/2284929
     double sin(double x){
@@ -299,7 +305,6 @@ private:
 
     bool isspace(unsigned char c);
     bool isdigit(unsigned char c);
-    double fabs(double x);
     double square(double n, double i, double j);
 
 };

@@ -60,11 +60,6 @@ bool Helper::isdigit(unsigned char c) {
  *
  *----------------------------------------------------------------------
  */
-double Helper::fabs(double x) {
-    if (x < 0) {
-      return -x;
-    }
-    return x;
-}
+
 
 __END_UTIL

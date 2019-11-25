@@ -9,7 +9,7 @@ SEND_DATA_TO_CLIENT = True
 
 def send_data_to_client(conn):
     # TODO: gerar valores aleatórios para as mensagens NMEAs (4 âncoras que já possuem posição definida)
-    conn.sendall('$GPGGA,183730,3907.356,N,12102.482,W,1,05,1.6,646.4,M,-24.1,M,,*75'.encode())
+    conn.sendall('$GPGGA,183730,90,N,0,E,1,05,1.6,0,M,-24.1,M,,*75'.encode())
     #time.sleep(10)
     #conn.sendall('$GPGGA,666666,6666.555,S,44444.333,E,2,06,2.5,777.1,N,-74.2,N,,*86'.encode())
 

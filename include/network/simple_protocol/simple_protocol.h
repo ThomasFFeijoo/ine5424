@@ -288,14 +288,13 @@ private:
                 delimiter_number == 9    // altitude
                ) {
                    int j = i + 1;
-                   char value[12];
+                   char value[12] = {0};
                    int k = 0;
                    while (nmea_message[j] != ',') {
                        value[k] = nmea_message[j];
                        j++;
                        k++;
                    }
-                   
                    main_data_nmea.handle_value(delimiter_number, value);
 
                    i = j - 1;
@@ -316,19 +315,32 @@ private:
 
         Helper helper = Helper();
         db<Observeds>(WRN) << "latitude: " << _main_data_nmea._latitude << endl;
+        db<Observeds>(WRN) << "longitude: " << _main_data_nmea._longitude << endl;
         double lat_radiano = helper.deg2rand(_main_data_nmea._latitude);
+        double lon_radiano = helper.deg2rand(_main_data_nmea._longitude);
         db<Observeds>(WRN) << "lat_radiano: " << lat_radiano << endl;
+        db<Observeds>(WRN) << "lon_radiano: " << lon_radiano << endl;
+
         double sin_lat = helper.sin(lat_radiano);
+        double sin_lon = helper.sin(lon_radiano);
+        double cos_lat = helper.cos(lat_radiano);
+        double cos_lon = helper.cos(lon_radiano);
         db<Observeds>(WRN) << "sin_lat: " << sin_lat << endl;
+        db<Observeds>(WRN) << "sin_lon: " << sin_lon << endl;
+        db<Observeds>(WRN) << "cos_lat: " << cos_lat << endl;
+        db<Observeds>(WRN) << "cos_lon: " << cos_lon << endl;
+
         double sqrt = helper.find_sqrt(1 - e2 * sin_lat * sin_lat);
         db<Observeds>(WRN) << "sqrt: " << sqrt << endl;
+        
         double n = a / sqrt;
         db<Observeds>(WRN) << "n: " << n << endl;
-        _nodo_position._x = (n + _main_data_nmea._altitude) * helper.cos(_main_data_nmea._latitude) * helper.cos(_main_data_nmea._longitude);
+        
+        _nodo_position._x = (n + _main_data_nmea._altitude) * cos_lat * cos_lon;
         db<Observeds>(WRN) << "x: " << _nodo_position._x << endl;
-        _nodo_position._y = (n + _main_data_nmea._altitude) * helper.cos(_main_data_nmea._latitude) * helper.sin(_main_data_nmea._longitude);
+        _nodo_position._y = (n + _main_data_nmea._altitude) * cos_lat * sin_lon;
         db<Observeds>(WRN) << "y: " << _nodo_position._y << endl;
-        _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * helper.sin(_main_data_nmea._latitude);
+        _nodo_position._z = (n * (1 - e2) + _main_data_nmea._altitude) * sin_lat;
         db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
     }
 
