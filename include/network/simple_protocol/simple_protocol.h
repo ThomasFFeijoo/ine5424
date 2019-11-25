@@ -190,7 +190,9 @@ private:
     char nmea_message[MAX_LENGTH];
 
     struct Main_Data_NMEA {
-        double _timestamp;
+        double _hours;
+        double _minutes;
+        double _seconds;
         double _latitude;
         char _latitude_orientation;
         double _longitude;
@@ -203,7 +205,9 @@ private:
             Helper helper = Helper();
             switch (id) {
             case 1:
-                _timestamp = helper.atof(value);
+                _hours = helper.atof((char *) value[0]) * 10 + helper.atof((char *) value[1]);
+                _minutes = helper.atof((char *) value[2]) * 10 + helper.atof((char *) value[3]);
+                _seconds = helper.atof((char *) value[4]) * 10 + helper.atof((char *) value[5]);
                 break;
             case 2:
                 db<Observeds>(WRN) << "latitude value: " << value << endl;
@@ -367,6 +371,20 @@ private:
         db<Observeds>(WRN) << "x: " << _nodo_position.x() << endl;
         db<Observeds>(WRN) << "y: " << _nodo_position.y() << endl;
         db<Observeds>(WRN) << "z: " << _nodo_position._z << endl;
+
+        RTC rtc;
+        RTC::Date now = rtc.date();
+        int days_since_0 = ((now.year() - 1) * 365) + (now.month() * 30) + (now.day() - 1);
+        int days_since_epoch = days_since_0 - Traits<RTC>::EPOCH_DAYS;
+        int seconds_from_epoch_until_yesterday = 86400 * days_since_epoch;
+        int seconds_from_epoch = seconds_from_epoch_until_yesterday + _main_data_nmea._hours * 3600 + _main_data_nmea._minutes * 60 + _main_data_nmea._seconds;
+        Alarm::elapsed() = seconds_from_epoch;
+
+        // more log
+        db<Observeds>(WRN) << "days_since_0: " << days_since_0 << endl;
+        db<Observeds>(WRN) << "days_since_epoch: " << days_since_epoch << endl;
+        db<Observeds>(WRN) << "seconds_from_epoch_until_yesterday: " << seconds_from_epoch_until_yesterday << endl;
+        db<Observeds>(WRN) << "seconds_from_epoch: " << seconds_from_epoch << endl;
     }
 
     void sync_time(int timestamp) {
