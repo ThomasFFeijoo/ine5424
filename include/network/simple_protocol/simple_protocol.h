@@ -289,7 +289,7 @@ private:
             }
 
             // it's log time
-            db<Observeds>(WRN) << "uart.get(" << c << ")" << endl;
+            db<Observeds>(INF) << "uart.get(" << c << ")" << endl;
         }
         db<Observeds>(WRN) << "received: " << nmea_message  << endl;
     }
@@ -404,10 +404,6 @@ private:
             _t2 = -1;
 
             // its log time
-            db<Observeds>(WRN) << "  _t1 " << _t1 << endl;
-            db<Observeds>(WRN) << "  _t2 " << _t2 << endl;
-            db<Observeds>(WRN) << "  timestamp " << timestamp << endl;
-            db<Observeds>(WRN) << "  t3 " << t3 << endl;
             db<Observeds>(WRN) << "  pd " << pd << endl;
             db<Observeds>(WRN) << "  offset " << offset << endl;
             db<Observeds>(WRN) << "  result " << t3 - offset << endl;
