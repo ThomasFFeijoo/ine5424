@@ -8,21 +8,16 @@ using namespace EPOS;
 OStream cout;
 Simple_Protocol * sp;
 
-//int uart_thread() {
-//    sp->start_uart();
-//}
-
 int main() {
-    cout << "Test uart" << endl;
+    cout << "P4 test" << endl;
 
     sp = new Simple_Protocol();
     Simple_Protocol::Address self = sp->address();
     char * text = (char*) "my text to say hello\n";
     char data[Traits<Simple_Protocol>::MTU];
+
     if(self[5] % 2) { // sender
         Delay(5000000);
-        //new Thread(&uart_thread);
-
         Simple_Protocol::Address other = self;
         other[5]--;
         sp->send(other, 99, text, Traits<Simple_Protocol>::MTU);
