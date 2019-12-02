@@ -438,6 +438,10 @@ private:
             db<Observeds>(WRN) << "  u " << u << endl;
             db<Observeds>(WRN) << "  _nodo_position._x " << _nodo_position.x() << endl;
             db<Observeds>(WRN) << "  _nodo_position._y " << _nodo_position.y() << endl;
+
+            // its erase time
+            _received_x = -1;
+            _received_y = -1;
         }
     }
 
