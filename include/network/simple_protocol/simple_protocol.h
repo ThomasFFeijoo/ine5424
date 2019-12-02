@@ -388,13 +388,9 @@ private:
         if (_t1 < 0 && _t2 < 0) {
             _t1 = timestamp;
             _t2 = Alarm::elapsed();
-            db<Observeds>(WRN) << "  T1 DO SERVIDOR " << _t1 << endl;
-            db<Observeds>(WRN) << "  T2 RECEIVER " << _t2 << endl;
         } else {
             // timestamp here is t4
             int t3 = Alarm::elapsed();
-            db<Observeds>(WRN) << "  T3 RECEIVER " << t3 << endl;
-            db<Observeds>(WRN) << "  T4 DO SERVIDOR " << timestamp << endl;
             int pd = ((_t2 - _t1) + (timestamp - t3)) / 2;
             int offset = (_t2 - _t1) - pd;
             Alarm::elapsed() = t3 - offset;
