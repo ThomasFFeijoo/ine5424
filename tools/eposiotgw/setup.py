@@ -12,7 +12,7 @@ setup(
         ],
     },
     install_requires=[
-        'Flask==1.0',
+        'Flask==2.3.2',
         'pyserial==2.7',
         'tornado==4.2.1',
         'requests==2.20.0',
